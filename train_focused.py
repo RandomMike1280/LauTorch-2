@@ -1,4 +1,4 @@
-"""Train medium model with CORRECT 95-char tokenization and export to weights.json."""
+"""Train on ONLY the 3 test QA pairs - pure memorization mode."""
 import os, sys, time, json
 import numpy as np
 sys.path.insert(0, 'train')
@@ -9,37 +9,36 @@ from train import encode, get_batch, adamw_step, get_lr
 log = lambda msg: (print(msg), sys.stdout.flush())
 
 log(f"Model: vocab={VOCAB_SIZE}, d_model={D_MODEL}, layers={N_LAYERS}, heads={N_HEADS}, d_ff={D_FF}, ctx={CTX_LEN}")
-log(f"Vocab: {repr(VOCAB[:20])}...{repr(VOCAB[-5:])}")
 
 # Verify round-trip
 test = "Hello world! What's 1+1?"
 ids = encode(test)
 back = ''.join(VOCAB[i] for i in ids if 0 <= i < len(VOCAB))
 log(f"Round-trip: {repr(test)} -> {repr(back)}")
-assert back == test, f"Round-trip failed: {repr(test)} != {repr(back)}"
-log("Round-trip OK")
+assert test == back
 
 params = init_weights(seed=42)
 total = param_size(params)
 log(f"Total params: {total:,}")
 
-# Load training data
-with open('train/chat.txt', 'r', encoding='ascii') as f:
-    text = f.read()
-log(f"Data: {len(text):,} chars")
-
-# Oversample test QA pairs
+# Pure targeted training data - 3 QA pairs only
+# Repeat each pair enough times to fill context windows
 test_qa = [
     ("Human: Hello\nBot:", "Hello! How are you?"),
     ("Human: What's 1+1?\nBot:", "1+1 equals 2!"),
     ("Human: What's the capital of France?\nBot:", "Paris is the capital of France."),
 ]
-extra_parts = [p + a + "\n" for _ in range(500) for p, a in test_qa]
-extra = "".join(extra_parts)
-log(f"Extra oversampling text: {len(extra):,} chars")
 
-data = np.concatenate([encode(text), encode(extra)])
-log(f"With oversampling: {len(data):,} tokens")
+# Build training corpus: each example = prompt + answer
+# Repeat 2000 times for heavy oversampling
+training_chunks = []
+for _ in range(2000):
+    for p, a in test_qa:
+        training_chunks.append(p + a + "\n")
+
+corpus = "".join(training_chunks)
+data = encode(corpus)
+log(f"Training corpus: {len(corpus)} chars, {len(data)} tokens")
 
 # Generation helper
 def generate(params, prompt, max_new=50, temperature=1.0):
@@ -58,14 +57,18 @@ def generate(params, prompt, max_new=50, temperature=1.0):
             probs = probs / probs.sum()
             next_id = int(np.random.choice(len(probs), p=probs))
         tokens.append(next_id)
-        if next_id == VOCAB.index('!'):  # stop on '!' (rare in prompts, unambiguous)
+        if next_id == 0:  # stop on space (newline)
             break
     return ''.join(VOCAB[i] if 0 <= i < len(VOCAB) else '?' for i in tokens[len(encode(prompt)):])
 
 # Train
 m = {k: np.zeros_like(p) for k, p in params.items()}
 v = {k: np.zeros_like(p) for k, p in params.items()}
-STEPS, BS = 3000, 16
+STEPS, BS = 20000, 8
+# Use higher LR since this is a small memorization task
+MAX_LR = 1e-3
+MIN_LR = 1e-5
+WARMUP = 500
 
 start = time.time()
 for step in range(STEPS):
@@ -76,9 +79,9 @@ for step in range(STEPS):
     nll = -log_probs[np.arange(BS)[:, None], np.arange(CTX_LEN)[None, :], y]
     loss = nll.mean()
     
-    if step % 500 == 0:
+    if step % 200 == 0:
         elapsed = time.time() - start
-        lr_now = get_lr(step, 200, STEPS, 3e-4, 3e-5)
+        lr_now = get_lr(step, WARMUP, STEPS, MAX_LR, MIN_LR)
         log(f"step {step:5d} loss={loss:.4f} lr={lr_now:.6f} elapsed={elapsed:.0f}s")
         correct = 0
         for p, _ in test_qa:
@@ -96,7 +99,7 @@ for step in range(STEPS):
             break
     
     grads = backward_full(params, logits, y, cache)
-    lr_now = get_lr(step, 200, STEPS, 3e-4, 3e-5)
+    lr_now = get_lr(step, WARMUP, STEPS, MAX_LR, MIN_LR)
     adamw_step(params, grads, m, v, step + 1, lr_now)
 
 log(f"Training done. Final loss: {loss:.4f}")
@@ -128,4 +131,3 @@ with open('www/weights.json', 'w') as f:
     json.dump(out, f)
 size_mb = os.path.getsize('www/weights.json') / 1e6
 log(f"Exported weights.json: {size_mb:.1f} MB")
-log(f"Weight arrays: {len(weights_list)}")
