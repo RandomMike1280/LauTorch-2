@@ -1,0 +1,169 @@
+Training started: 1784942128.2681339
+step     0 loss=4.3692 lr=0.000002 elapsed=0.1s
+  > 'human: hello\nbot:' -> 'human: hello\nbot:!!>>>>>88888888888888888888888'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot:!!!;4;4;4;/`__;/``````````````"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot:!;4;4;4;4;/`uuuu`'''''''``````"
+step   200 loss=2.8549 lr=0.000402 elapsed=57.1s
+step   400 loss=1.4625 lr=0.000802 elapsed=117.4s
+step   600 loss=0.5961 lr=0.001000 elapsed=175.1s
+step   800 loss=0.4616 lr=0.001000 elapsed=231.2s
+step  1000 loss=0.2455 lr=0.001000 elapsed=289.3s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital cital of"
+step  1200 loss=0.4450 lr=0.001000 elapsed=344.9s
+step  1400 loss=0.5694 lr=0.000999 elapsed=401.6s
+step  1600 loss=0.3568 lr=0.000999 elapsed=457.3s
+step  1800 loss=0.6366 lr=0.000998 elapsed=515.0s
+step  2000 loss=0.5261 lr=0.000998 elapsed=571.0s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the cal ofris paris."
+step  2200 loss=0.1869 lr=0.000997 elapsed=629.3s
+step  2400 loss=0.2430 lr=0.000997 elapsed=683.9s
+step  2600 loss=0.3553 lr=0.000996 elapsed=740.3s
+step  2800 loss=0.1990 lr=0.000995 elapsed=798.4s
+step  3000 loss=0.2292 lr=0.000994 elapsed=855.5s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! nice to meeet you.\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris, france?\n"
+step  3200 loss=0.2606 lr=0.000993 elapsed=911.3s
+step  3400 loss=0.2643 lr=0.000992 elapsed=966.8s
+step  3600 loss=0.2018 lr=0.000991 elapsed=1023.2s
+step  3800 loss=0.2414 lr=0.000990 elapsed=1080.5s
+step  4000 loss=0.1670 lr=0.000989 elapsed=1137.0s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of frinc"
+step  4200 loss=0.2973 lr=0.000988 elapsed=1194.2s
+step  4400 loss=0.2033 lr=0.000986 elapsed=1249.6s
+step  4600 loss=0.2617 lr=0.000985 elapsed=1306.8s
+step  4800 loss=0.2813 lr=0.000983 elapsed=1363.3s
+step  5000 loss=0.1836 lr=0.000982 elapsed=1418.8s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step  5200 loss=0.2214 lr=0.000980 elapsed=1475.3s
+step  5400 loss=0.1812 lr=0.000978 elapsed=1530.9s
+step  5600 loss=0.2062 lr=0.000977 elapsed=1587.9s
+step  5800 loss=0.2793 lr=0.000975 elapsed=1642.1s
+step  6000 loss=0.2760 lr=0.000973 elapsed=1699.5s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! nice to meet you.\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris!\n"
+step  6200 loss=0.2193 lr=0.000971 elapsed=1757.1s
+step  6400 loss=0.2562 lr=0.000969 elapsed=1814.1s
+step  6600 loss=0.2571 lr=0.000967 elapsed=1869.8s
+step  6800 loss=0.2548 lr=0.000965 elapsed=1924.8s
+step  7000 loss=0.1884 lr=0.000962 elapsed=1981.0s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hi there! how can i help?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step  7200 loss=0.2093 lr=0.000960 elapsed=2036.2s
+step  7400 loss=0.2301 lr=0.000958 elapsed=2093.9s
+step  7600 loss=0.2122 lr=0.000955 elapsed=2149.7s
+step  7800 loss=0.1945 lr=0.000953 elapsed=2206.9s
+step  8000 loss=0.1831 lr=0.000950 elapsed=2264.1s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step  8200 loss=0.3084 lr=0.000947 elapsed=2321.2s
+step  8400 loss=0.2184 lr=0.000945 elapsed=2377.0s
+step  8600 loss=0.3062 lr=0.000942 elapsed=2432.9s
+step  8800 loss=0.1813 lr=0.000939 elapsed=2488.4s
+step  9000 loss=0.1878 lr=0.000936 elapsed=2544.3s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! nice to meet you.\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of fris "
+step  9200 loss=0.2597 lr=0.000933 elapsed=2602.1s
+step  9400 loss=0.1711 lr=0.000930 elapsed=2659.7s
+step  9600 loss=0.1674 lr=0.000927 elapsed=2715.6s
+step  9800 loss=0.2896 lr=0.000924 elapsed=2770.2s
+step 10000 loss=0.1616 lr=0.000921 elapsed=2827.0s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hi! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital city.\n"
+step 10200 loss=0.2009 lr=0.000917 elapsed=2885.6s
+step 10400 loss=0.2359 lr=0.000914 elapsed=2945.2s
+step 10600 loss=0.2482 lr=0.000911 elapsed=3006.0s
+step 10800 loss=0.2079 lr=0.000907 elapsed=3064.4s
+step 11000 loss=0.2415 lr=0.000904 elapsed=3120.1s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step 11200 loss=0.1843 lr=0.000900 elapsed=3174.8s
+step 11400 loss=0.2524 lr=0.000897 elapsed=3231.8s
+step 11600 loss=0.1757 lr=0.000893 elapsed=3290.6s
+step 11800 loss=0.2333 lr=0.000889 elapsed=3345.3s
+step 12000 loss=0.2320 lr=0.000885 elapsed=3400.7s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step 12200 loss=0.2021 lr=0.000882 elapsed=3457.1s
+step 12400 loss=0.2002 lr=0.000878 elapsed=3512.4s
+step 12600 loss=0.1433 lr=0.000874 elapsed=3567.7s
+step 12800 loss=0.2278 lr=0.000870 elapsed=3624.3s
+step 13000 loss=0.2509 lr=0.000866 elapsed=3681.3s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: the capital of france is pari"
+step 13200 loss=0.1916 lr=0.000862 elapsed=3740.2s
+step 13400 loss=0.2263 lr=0.000857 elapsed=3795.7s
+step 13600 loss=0.2013 lr=0.000853 elapsed=3853.0s
+step 13800 loss=0.2157 lr=0.000849 elapsed=3910.1s
+step 14000 loss=0.1835 lr=0.000845 elapsed=3967.4s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: the capital of france is is p"
+step 14200 loss=0.1939 lr=0.000840 elapsed=4024.7s
+step 14400 loss=0.1608 lr=0.000836 elapsed=4080.1s
+step 14600 loss=0.1468 lr=0.000832 elapsed=4136.3s
+step 14800 loss=0.2264 lr=0.000827 elapsed=4191.4s
+step 15000 loss=0.1840 lr=0.000823 elapsed=4247.6s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hi! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step 15200 loss=0.2060 lr=0.000818 elapsed=4306.0s
+step 15400 loss=0.1973 lr=0.000813 elapsed=4364.2s
+step 15600 loss=0.1613 lr=0.000809 elapsed=4492.9s
+step 15800 loss=0.1733 lr=0.000804 elapsed=4621.2s
+step 16000 loss=0.1974 lr=0.000799 elapsed=4751.6s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: one plus one equals two.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris!\n"
+step 16200 loss=0.1756 lr=0.000794 elapsed=4836.0s
+step 16400 loss=0.2195 lr=0.000790 elapsed=4909.2s
+step 16600 loss=0.1822 lr=0.000785 elapsed=4981.2s
+step 16800 loss=0.2447 lr=0.000780 elapsed=5050.8s
+step 17000 loss=0.2920 lr=0.000775 elapsed=5121.3s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hi! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital ce.\n"
+step 17200 loss=0.1784 lr=0.000770 elapsed=5193.6s
+step 17400 loss=0.2216 lr=0.000765 elapsed=5263.4s
+step 17600 loss=0.1944 lr=0.000760 elapsed=5336.7s
+step 17800 loss=0.1585 lr=0.000755 elapsed=5403.2s
+step 18000 loss=0.1916 lr=0.000750 elapsed=5473.1s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! what can i do for you?'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step 18200 loss=0.1730 lr=0.000745 elapsed=5543.0s
+step 18400 loss=0.1907 lr=0.000740 elapsed=5610.6s
+step 18600 loss=0.2870 lr=0.000734 elapsed=5680.1s
+step 18800 loss=0.1455 lr=0.000729 elapsed=5748.6s
+step 19000 loss=0.1870 lr=0.000724 elapsed=5816.4s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how can i help you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: that's 2!\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital of franc"
+step 19200 loss=0.1824 lr=0.000719 elapsed=5885.5s
+step 19400 loss=0.1540 lr=0.000713 elapsed=5957.7s
+step 19600 loss=0.1580 lr=0.000708 elapsed=6027.2s
+step 19800 loss=0.2392 lr=0.000703 elapsed=6094.5s
+step 20000 loss=0.1878 lr=0.000697 elapsed=6163.0s
+  > 'human: hello\nbot:' -> 'human: hello\nbot: hello! how are you?\n'
+  > "human: what's 1+1?\nbot:" -> "human: what's 1+1?\nbot: the answer is 2.\n"
+  > "human: what's the capital of france?\nbot:" -> "human: what's the capital of france?\nbot: paris is the capital cityof c"
+step 20200 loss=0.2726 lr=0.000692 elapsed=6234.2s
+step 20400 loss=0.2262 lr=0.000686 elapsed=6303.9s
+step 20600 loss=0.2103 lr=0.000681 elapsed=6370.8s
+step 20800 loss=0.1671 lr=0.000675 elapsed=6438.2s

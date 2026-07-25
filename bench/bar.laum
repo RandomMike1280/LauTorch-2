@@ -1,0 +1,4 @@
+-- bench/bar.laum
+return {
+    func() print("hi from laum") end
+}

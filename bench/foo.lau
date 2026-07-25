@@ -1,0 +1,5 @@
+-- bench/foo.lau
+-- Since foo.lau lives in bench/, path is relative to bench/
+varol m = req("bar.laum")
+print(type(m))
+m[1]()

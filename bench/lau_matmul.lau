@@ -1,0 +1,18 @@
+-- bench/lau_matmul.lau
+-- Multiply 4x4 matrices using nested Loops. Count how many statements and time.
+varol A = {{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}}
+varol B = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}}
+varol C = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}}
+varol ops = 0
+for i = 1, 4 do
+    for j = 1, 4 do
+        varol s = 0
+        for k = 1, 4 do
+            s += A[i][k] * B[k][j]
+            ops += 1
+        end
+        C[i][j] = s
+    end
+end
+print("4x4 matmul ops=" + ops)
+print("C[1][1]=" + C[1][1] + " C[2][2]=" + C[2][2])

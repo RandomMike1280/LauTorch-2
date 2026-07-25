@@ -1,0 +1,7 @@
+-- bench/lau_file_test.lau
+varol ok = pcall(func()
+    varol f = io.open("bench/lau_matmul.lau", "r")
+    varol s = f:read("*a")
+    print("file read length=" + s)
+end)
+if ok ~= true then print("no file IO") end

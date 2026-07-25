@@ -1,0 +1,273 @@
+--@cost(t=0)
+varol E=req("weights_emb.laum")
+varol A=req("weights_l0.laum")
+varol B=req("weights_l1.laum")
+varol D=16
+varol H=4
+varol HD=4
+varol V=96
+varol CTX=16
+varol L=" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+-- Precompute byte offsets (1-indexed)
+varol O={1,33,65,577,1089,1601,2113,2145,2177,2689,2721,3233,3265,3297}
+varol OE=1
+varol T={}
+for i=1,800 do
+T[#T+1]=0
+end
+varol K0={}
+for i=1,256 do
+K0[#K0+1]=0
+end
+varol V0={}
+for i=1,256 do
+V0[#V0+1]=0
+end
+varol K1={}
+for i=1,256 do
+K1[#K1+1]=0
+end
+varol V1={}
+for i=1,256 do
+V1[#V1+1]=0
+end
+varol P=0
+func d(s,p)
+varol a=string.sub(s,p,p)
+varol b=string.sub(s,p+1,p+1)
+varol x=string.find(L,a,1,true)
+varol y=string.find(L,b,1,true)
+if x==null then x=1 end
+if y==null then y=1 end
+return (x-1)*95+(y-1)-127
+end
+func er(t)
+varol r={}
+for j=1,D do
+r[#r+1]=d(E.d,OE+(t-1)*D*2+(j-1)*2)*E.c[1]
+end
+return r
+end
+func sq(x)
+if x<0.00001 then return 0.01 end
+varol g=x
+for i=1,8 do
+g=0.5*(g+x/g)
+end
+return g
+end
+func th(x)
+if x>4 then return 1 end
+if x<-4 then return -1 end
+varol a=x*x
+varol r=x*(1+a*(0.1333247+a*(0.0533742+a*0.0238567)))
+return r/(1+a*(0.3333333+a*(0.1333247+a*0.0533742)))
+end
+func gl(x)
+return 0.5*x*(1.0+th(0.7978845608*(x+0.044715*x*x*x)))
+end
+func ex(x)
+if x<-20 then return 0 end
+if x>10 then return 22000 end
+if x<0 then return 1/ex(-x) end
+varol s=1
+varol t=1
+for i=1,20 do
+t=t*x/i
+s=s+t
+end
+return s
+end
+func tk(s)
+varol o={}
+for i=1,#s do
+varol c=string.sub(s,i,i)
+varol p=string.find(L,c,1,true)
+if p==null then p=1 end
+o[#o+1]=p-1
+end
+return o
+end
+func di(i) return string.sub(L,i+1,i+1) end
+func lx(x,W,O2,KC,VC)
+varol m=0
+for j=1,D do
+m=m+x[j]
+end
+m=m/D
+varol v=0
+for j=1,D do
+v=v+(x[j]-m)*(x[j]-m)
+end
+v=v/D
+varol s=sq(v)+0.001
+for j=1,D do
+T[j]=((x[j]-m)/s)*d(W.d,O2[1]+(j-1)*2)*W.c[1]+d(W.d,O2[2]+(j-1)*2)*W.c[2]
+end
+for i=1,D do
+varol ss=0
+for j=1,D do
+ss=ss+d(W.d,O2[3]+((j-1)*D+i-1)*2)*W.c[3]*T[j]
+end
+T[16+i]=ss
+end
+for i=1,D do
+varol ss=0
+for j=1,D do
+ss=ss+d(W.d,O2[4]+((j-1)*D+i-1)*2)*W.c[4]*T[j]
+end
+KC[(P-1)*D+i]=ss
+end
+for i=1,D do
+varol ss=0
+for j=1,D do
+ss=ss+d(W.d,O2[5]+((j-1)*D+i-1)*2)*W.c[5]*T[j]
+end
+VC[(P-1)*D+i]=ss
+end
+for hh=1,H do
+varol hs=(hh-1)*HD
+varol sc={}
+for i=1,P do
+varol kk=(i-1)*D+hs+1
+varol ss=0
+for d=1,HD do
+ss=ss+T[16+hs+d]*KC[kk+d-1]
+end
+sc[#sc+1]=ss*0.5
+end
+varol mx=-999999
+for i=1,P do
+if sc[i]>mx then mx=sc[i] end
+end
+varol sm=0
+for i=1,P do
+sc[i]=ex(sc[i]-mx)
+sm=sm+sc[i]
+end
+for i=1,P do
+sc[i]=sc[i]/sm
+end
+for d=1,HD do
+varol ss=0
+for i=1,P do
+varol vv=(i-1)*D+hs+d
+ss=ss+sc[i]*VC[vv]
+end
+T[32+hs+d]=ss
+end
+end
+for i=1,D do
+varol ss=0
+for j=1,D do
+ss=ss+d(W.d,O2[6]+((j-1)*D+i-1)*2)*W.c[6]*T[32+j]
+end
+x[i]=ss+x[i]
+end
+m=0
+for j=1,D do
+m=m+x[j]
+end
+m=m/D
+v=0
+for j=1,D do
+v=v+(x[j]-m)*(x[j]-m)
+end
+v=v/D
+s=sq(v)+0.001
+for j=1,D do
+T[j]=((x[j]-m)/s)*d(W.d,O2[7]+(j-1)*2)*W.c[7]+d(W.d,O2[8]+(j-1)*2)*W.c[8]
+end
+for i=1,D do
+varol ss=d(W.d,O2[10]+(i-1)*2)*W.c[10]
+for j=1,D do
+ss=ss+d(W.d,O2[9]+((j-1)*D+i-1)*2)*W.c[9]*T[j]
+end
+T[16+i]=gl(ss)
+end
+for i=1,D do
+varol ss=d(W.d,O2[12]+(i-1)*2)*W.c[12]
+for j=1,D do
+ss=ss+d(W.d,O2[11]+((j-1)*D+i-1)*2)*W.c[11]*T[16+j]
+end
+x[i]=ss+x[i]
+end
+end
+func fwd(x)
+if P>=CTX then
+for i=1,CTX-1 do
+for j=1,D do
+K0[(i-1)*D+j]=K0[i*D+j]
+V0[(i-1)*D+j]=V0[i*D+j]
+K1[(i-1)*D+j]=K1[i*D+j]
+V1[(i-1)*D+j]=V1[i*D+j]
+end
+end
+P=CTX-1
+end
+P=P+1
+lx(x,A,O,K0,V0)
+lx(x,B,O,K1,V1)
+varol m=0
+for j=1,D do
+m=m+x[j]
+end
+m=m/D
+varol v=0
+for j=1,D do
+v=v+(x[j]-m)*(x[j]-m)
+end
+v=v/D
+varol s=sq(v)+0.001
+for j=1,D do
+T[j]=((x[j]-m)/s)*d(B.d,O[13]+(j-1)*2)*B.c[13]+d(B.d,O[14]+(j-1)*2)*B.c[14]
+end
+varol lg={}
+for i=1,V do
+varol ss=0
+for j=1,D do
+ss=ss+d(E.d,OE+((i-1)*D+j-1)*2)*E.c[1]*T[j]
+end
+lg[#lg+1]=ss
+end
+return lg
+end
+func am(a)
+varol b=-999999
+varol bi=1
+for i=1,#a do
+if a[i]>b then b=a[i] bi=i end
+end
+return bi
+end
+func gen(p,n)
+varol ts=tk(p)
+if #ts>CTX then
+varol nt={}
+for i=#ts-CTX+1,#ts do
+nt[#nt+1]=ts[i]
+end
+ts=nt
+end
+for i=1,#ts do
+varol x=er(ts[i])
+fwd(x)
+end
+varol o=""
+varol li=ts[#ts]
+for i=1,n do
+varol x=er(li)
+varol lg=fwd(x)
+varol bi=am(lg)
+o=o+di(bi)
+if bi==0 then break end
+li=bi
+end
+return o
+end
+print("Q: Hello")
+print("A: " + gen("Human: Hello\nBot:",30))
+print("Q: What's 1+1?")
+print("A: " + gen("Human: What's 1+1?\nBot:",30))
+print("Q: What's the capital of France?")
+print("A: " + gen("Human: What's the capital of France?\nBot:",30))

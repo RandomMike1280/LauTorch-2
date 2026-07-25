@@ -1,0 +1,6 @@
+-- bench/lau_inlined.lau
+varol s = 0
+for i = 1, 100 do
+    s = s + i
+end
+print("inlined sum=" + s)

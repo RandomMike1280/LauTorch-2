@@ -1,0 +1,12 @@
+-- bench/lau_throughput.lau
+-- Time how many simple statements fit in a budget
+varol spent = 0
+varol count = 0
+varol start = task.clock()
+while spent < 5 do
+    count += 1
+    if count % 100 == 0 then
+        spent = task.clock() - start
+    end
+end
+print("100-statement batches in 5s: " + count)
