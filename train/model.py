@@ -68,6 +68,65 @@ def softmax(x, axis=-1):
     e = np.exp(x - x_max)
     return e / e.sum(axis=axis, keepdims=True)
 
+def compute_rope_freqs(seq_len, head_dim, theta=10000.0):
+    """Precompute RoPE rotation angles. Returns (cos, sin) of shape (seq_len, head_dim//2)."""
+    freqs = 1.0 / (theta ** (np.arange(0, head_dim, 2, dtype=np.float32) / head_dim))
+    positions = np.arange(seq_len, dtype=np.float32)[:, None]
+    angles = positions * freqs[None, :]
+    cos = np.cos(angles).astype(np.float32)
+    sin = np.sin(angles).astype(np.float32)
+    return cos, sin
+
+def apply_rope(x, cos, sin):
+    """Apply RoPE to x of shape (..., head_dim). cos/sin: (seq_len, head_dim//2).
+
+    The leading dimensions of x can be anything as long as the last axis is head_dim.
+    cos/sin must broadcast on all axes except the last.
+    """
+    x1 = x[..., ::2]
+    x2 = x[..., 1::2]
+    rx = x1 * cos - x2 * sin
+    ix = x1 * sin + x2 * cos
+    out = np.empty_like(x)
+    out[..., ::2] = rx
+    out[..., 1::2] = ix
+    return out
+
+def apply_rope_heads(x_heads, cos, sin):
+    """Apply RoPE to x_heads of shape (B, n_heads, T, head_dim).
+    cos/sin: (T, head_dim//2).
+    """
+    x1 = x_heads[..., ::2]
+    x2 = x_heads[..., 1::2]
+    rx = x1 * cos - x2 * sin
+    ix = x1 * sin + x2 * cos
+    out = np.empty_like(x_heads)
+    out[..., ::2] = rx
+    out[..., 1::2] = ix
+    return out
+
+def rope_backward_heads(dy_heads, cos, sin):
+    """Backprop through RoPE on (B, n_heads, T, head_dim). RoPE is per-pair rotation, so dx = dy @ R^T."""
+    dy1 = dy_heads[..., ::2]
+    dy2 = dy_heads[..., 1::2]
+    dx1 = dy1 * cos + dy2 * sin
+    dx2 = -dy1 * sin + dy2 * cos
+    dx = np.empty_like(dy_heads)
+    dx[..., ::2] = dx1
+    dx[..., 1::2] = dx2
+    return dx
+
+def rope_backward(dy, cos, sin):
+    """Backprop through RoPE. RoPE is a per-pair rotation, so dx = dy @ R^T."""
+    dy1 = dy[..., ::2]
+    dy2 = dy[..., 1::2]
+    dx1 = dy1 * cos + dy2 * sin
+    dx2 = -dy1 * sin + dy2 * cos
+    dx = np.empty_like(dy)
+    dx[..., ::2] = dx1
+    dx[..., 1::2] = dx2
+    return dx
+
 def cross_entropy(logits, targets):
     # logits: (B, T, V), targets: (B, T)
     B, T, V = logits.shape
@@ -116,6 +175,8 @@ def forward(params, tokens, save_cache=True):
     x = params['emb'][tokens]  # (B, T, D)
     if cache is not None:
         cache['emb_out'] = x
+    B, T = x.shape[:2]
+    rope_cos, rope_sin = compute_rope_freqs(T, HEAD_DIM)
     for i in range(N_LAYERS):
         # LN1
         x_norm, x_raw, x_mean, x_var, x_post = layernorm(x, params[f'l{i}.ln1_g'], params[f'l{i}.ln1_b'])
@@ -128,6 +189,9 @@ def forward(params, tokens, save_cache=True):
         q = q.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
         k = k.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
         v = v.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
+        # Apply RoPE to Q and K (per-head)
+        q = apply_rope_heads(q, rope_cos, rope_sin)
+        k = apply_rope_heads(k, rope_cos, rope_sin)
         # Attention scores
         scale = 1.0 / np.sqrt(HEAD_DIM)
         scores = (q @ k.transpose(0, 1, 3, 2)) * scale  # (B, NH, T, T)
@@ -233,6 +297,11 @@ def forward_full(params, tokens):
     cache = {'tokens': tokens}
     x = params['emb'][tokens]
     cache['emb_out'] = x
+    B, T = x.shape[:2]
+    # Precompute RoPE cos/sin for the full sequence length
+    rope_cos, rope_sin = compute_rope_freqs(T, HEAD_DIM)  # (T, HD//2)
+    cache['rope_cos'] = rope_cos
+    cache['rope_sin'] = rope_sin
     for i in range(N_LAYERS):
         # Save input to layer
         cache[f'l{i}.x_in'] = x
@@ -256,6 +325,11 @@ def forward_full(params, tokens):
         q_h = q.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
         k_h = k.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
         v_h = v.reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3)
+        # Apply RoPE to Q and K (per-head, position-aware rotation)
+        q_h = apply_rope_heads(q_h, rope_cos, rope_sin)
+        k_h = apply_rope_heads(k_h, rope_cos, rope_sin)
+        cache[f'l{i}.q_h'] = q_h
+        cache[f'l{i}.k_h'] = k_h
         scale = 1.0 / np.sqrt(HEAD_DIM)
         scores = (q_h @ k_h.transpose(0, 1, 3, 2)) * scale
         mask = np.tril(np.ones((T, T), dtype=np.float32))
@@ -377,10 +451,15 @@ def backward_full(params, logits, targets, cache):
         # Apply mask
         mask = np.tril(np.ones((T, T), dtype=np.float32))
         d_scores_masked = d_scores_masked * mask  # masked positions have 0 grad
-        # scores = (q_h @ k_h.T) * scale
+        # scores = (q_h @ k_h.T) * scale  -- q_h/k_h are already RoPE-rotated
         scale = 1.0 / np.sqrt(HEAD_DIM)
-        dq_h = d_scores_masked @ cache[f'l{i}.k'].reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3) * scale
-        dk_h = d_scores_masked.transpose(0, 1, 3, 2) @ cache[f'l{i}.q'].reshape(B, T, N_HEADS, HEAD_DIM).transpose(0, 2, 1, 3) * scale
+        q_h = cache[f'l{i}.q_h']
+        k_h = cache[f'l{i}.k_h']
+        dq_h = d_scores_masked @ k_h * scale
+        dk_h = d_scores_masked.transpose(0, 1, 3, 2) @ q_h * scale
+        # Back through RoPE to get gradients w.r.t. pre-rotation Q and K
+        dq_h = rope_backward_heads(dq_h, cache['rope_cos'], cache['rope_sin'])
+        dk_h = rope_backward_heads(dk_h, cache['rope_cos'], cache['rope_sin'])
         # Back through reshape
         dq = dq_h.transpose(0, 2, 1, 3).reshape(B, T, D_MODEL_)
         dk = dk_h.transpose(0, 2, 1, 3).reshape(B, T, D_MODEL_)

@@ -2,6 +2,21 @@
 varol data,math,LO0,LO1,L=req("weights.laum"),req("utils.laum"),2,14,""
 varol C,W=data.config,data.weights
 varol V,D,H,HD,FF,CTX,E=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e
+-- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)
+-- where k indexes the pair (k = 1..HD/2) and p = 1..CTX.
+varol THETA=10000
+varol CS,SN={},{}
+for i=1,CTX do
+    varol cr,sr={},{}
+    for k=1,HD/2 do
+        varol e=THETA^((2*(k-1))/HD)
+        varol f=1/e
+        cr[k]=math.cos(f*i)
+        sr[k]=math.sin(f*i)
+    end
+    CS[i]=cr
+    SN[i]=sr
+end
 -- Build vocab from vocab_chars list
 for i=1,#data.vocab_chars do
     L+=data.vocab_chars[i]
@@ -87,6 +102,21 @@ end
 func gl(x)
     return 0.5*x*(1+th(0.7978845608*(x+0.044715*x*x*x)))
 end
+-- RoPE: rotate vector in-place using position p's precomputed cos/sin
+-- Operates on pairs (T[2k-1], T[2k]) for k = 1..HD/2.
+-- For each pair: real = T[2k-1]*cos[k] - T[2k]*sin[k]
+--                imag = T[2k-1]*sin[k] + T[2k]*cos[k]
+-- Note: T is mutated; the caller is responsible for providing a copy if needed.
+func rp(T,p)
+    for k=1,HD/2 do
+        varol a=T[2*k-1]
+        varol b=T[2*k]
+        varol c=CS[p][k]
+        varol s=SN[p][k]
+        T[2*k-1]=a*c-b*s
+        T[2*k]=a*s+b*c
+    end
+end
 -- Attention + MLP block. K and V are nested: K[p][i] = flat (p-1)*D + i.
 func attn(x,LOff,K,V)
     varol xr={}
@@ -106,6 +136,13 @@ func attn(x,LOff,K,V)
         TV[i]=vv
         K[P][i]=kk
         V[P][i]=vv
+    end
+    -- Apply RoPE to Q and K at the current position P.
+    -- After this, TQ and TK hold rotated Q/K, and K[P] holds the rotated K.
+    rp(TQ,P)
+    rp(TK,P)
+    for i=1,D do
+        K[P][i]=TK[i]
     end
     for hh=1,H do
         varol hs,sc,mx,sm=(hh-1)*HD,{},-999999,0
