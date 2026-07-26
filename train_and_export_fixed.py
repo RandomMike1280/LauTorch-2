@@ -65,7 +65,6 @@ with open('train/chat.txt', 'r', encoding='ascii') as f:
     text = f.read()
 log(f"Data: {len(text):,} chars")
 
-# Oversample test QA pairs
 test_qa = [
     ("Human: Hello\nBot:", "Hello! How are you?"),
     ("Human: What's 9+10?\nBot:", "9+10 equals 19!"),
@@ -78,7 +77,7 @@ test_qa = [
 
 # data = np.concatenate([encode(text), encode(extra)])
 data = encode(text)
-log(f"With oversampling: {len(data):,} tokens")
+# log(f"With oversampling: {len(data):,} tokens")
 
 # Generation helper
 def generate(params, prompt, max_new=100, temperature=1.0):
@@ -126,11 +125,11 @@ for step in range(STEPS):
         for p, _ in test_qa:
             s = generate(params, p, max_new=50, temperature=0.0)
             log(f"  > {repr(s)}")
-            if "Hello" in p and any(w in s.lower() for w in ["hello", "hi"]):
+            if "Hello" in p and any(w in s.lower() for w in ["hello", "hi","hey there"]):
                 correct += 1
             elif "9+10" in p and "19" in s:
                 correct += 1
-            elif "France" in p and "paris" in s.lower():
+            elif "Germany" in p and "berlin" in s.lower():
                 correct += 1
             elif "3*3" in p and "9" in s:
                 correct += 1

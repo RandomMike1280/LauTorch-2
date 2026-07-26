@@ -419,15 +419,14 @@ def backward_full(params, logits, targets, cache):
         grads[f'l{i}.b1'] = dh_pre.sum(axis=(0, 1))
         # dx_post2 = dh_pre @ w1.T
         dx_post2 = (dh_pre @ params[f'l{i}.w1'].T)
-        # dx_res1 += dx_post2 (LN2 input gradient)
-        # Back through LN2
+        # LN2 backward: dout is gradient at LN2's output (dx_post2), NOT plus dx_res1
         dxp, dgamma2, dbeta2 = layernorm_grad(
-            dx_post2 + dx_res1, cache[f'l{i}.x_res1'], cache[f'l{i}.ln2_mean'],
+            dx_post2, cache[f'l{i}.x_res1'], cache[f'l{i}.ln2_mean'],
             cache[f'l{i}.ln2_var'], cache[f'l{i}.ln2_xnorm'], params[f'l{i}.ln2_g'])
         grads[f'l{i}.ln2_g'] = dgamma2
         grads[f'l{i}.ln2_b'] = dbeta2
-        # dx = dxp (now this is the gradient w.r.t. layer input)
-        dx = dxp
+        # Total gradient at x_res1 = residual (dx_res1) + LN2 backward (dxp)
+        dx = dx_res1 + dxp
         # Back through attention
         # x_res1 = x_in + wo_out, so:
         dx_in = dx
@@ -471,13 +470,14 @@ def backward_full(params, logits, targets, cache):
         grads[f'l{i}.wv'] = x_post_flat.T @ dv.reshape(-1, D_MODEL_)
         # dx_post = dq @ wq.T + dk @ wk.T + dv @ wv.T
         dx_post = (dq @ params[f'l{i}.wq'].T) + (dk @ params[f'l{i}.wk'].T) + (dv @ params[f'l{i}.wv'].T)
-        # Back through LN1
+        # LN1 backward: dout is gradient at LN1's output (dx_post), NOT plus dx_in
         dxp, dgamma1, dbeta1 = layernorm_grad(
-            dx_post + dx_in, cache[f'l{i}.x_in'], cache[f'l{i}.ln1_mean'],
+            dx_post, cache[f'l{i}.x_in'], cache[f'l{i}.ln1_mean'],
             cache[f'l{i}.ln1_var'], cache[f'l{i}.ln1_xnorm'], params[f'l{i}.ln1_g'])
         grads[f'l{i}.ln1_g'] = dgamma1
         grads[f'l{i}.ln1_b'] = dbeta1
-        dx = dxp
+        # Total gradient at x_in = residual (dx_in) + LN1 backward (dxp)
+        dx = dx_in + dxp
         # Add to embedding grad for x_in (which is emb_out of prev layer or this token lookups)
         # We'll handle the embedding grad separately using dlogits path
     return grads

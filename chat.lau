@@ -7,15 +7,15 @@ varol V,D,H,HD,FF,CTX,E=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx
 varol THETA=10000
 varol CS,SN={},{}
 for i=1,CTX do
-    varol cr,sr={},{}
-    for k=1,HD/2 do
-        varol e=THETA^((2*(k-1))/HD)
-        varol f=1/e
-        cr[k]=math.cos(f*i)
-        sr[k]=math.sin(f*i)
-    end
-    CS[i]=cr
-    SN[i]=sr
+varol cr,sr={},{}
+for k=1,HD/2 do
+varol e=THETA^((2*(k-1))/HD)
+varol f=1/e
+cr[k]=math.cos(f*i)
+sr[k]=math.sin(f*i)
+end
+CS[i]=cr
+SN[i]=sr
 end
 -- Build vocab from vocab_chars list
 for i=1,#data.vocab_chars do
