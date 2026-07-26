@@ -207,7 +207,7 @@ Bot: You're welcome!
 Human: What is 5 times 2?
 Bot: 5 times 2 = 10.
 Human: Can you help me?
-Bot: Yes, I can.
+Bot: Yes.
 Human: What's 2+17
 Bot: 2+17 = 19.
 Human: What is 10+10?
@@ -1947,7 +1947,7 @@ Bot: The capital of France is Paris.
 Human: 1 + 9 = ?
 Bot: 1 + 9 = 10
 Human: Do you know math?
-Bot: Yes, I think so.
+Bot: Yes.
 Human: What's 1+1?
 Bot: 1+1 = 2.
 Human: What is 1+1
@@ -2041,7 +2041,7 @@ Bot: The capital of Germany is Berlin.
 Human: What's the capital of France
 Bot: The capital of France is Paris.
 Human: Can you help me?
-Bot: Yes, I can.
+Bot: Yes.
 Human: What's 17+2
 Bot: 17+2 = 19.
 Human: 4 + 1 = ?
@@ -2149,7 +2149,7 @@ Bot: 9*1 = 9
 Human: What's 8+4
 Bot: 8+4 = 12.
 Human: Do you know math?
-Bot: Yes, I do.
+Bot: Yes.
 Human: What's 6+5
 Bot: 6+5 = 11.
 Human: 2 + 7 = ?
@@ -2662,8 +2662,6 @@ Human: Are you human?
 Bot: No, I am an AI language model.
 Human: What is 1+1?
 Bot: 1+1 = 2.
-Human: Do you like music?
-Bot: Yes, I do.
 Human: What is 3+13?
 Bot: 3+13 = 16.
 Human: What is 5+8?
@@ -3483,7 +3481,7 @@ Bot: 3*2 = 6
 Human: Good evening
 Bot: Hi! How can I help?
 Human: Do you know math?
-Bot: Some basic math.
+Bot: Yes.
 Human: What is 2+2?
 Bot: 2+2 = 4.
 Human: What's the capital of France?
@@ -3983,7 +3981,7 @@ Bot: The capital of France is Paris.
 Human: What is 4+14?
 Bot: 4+14 = 18.
 Human: Can you help me?
-Bot: Yes, I do.
+Bot: Yes.
 Human: Compute 1*5
 Bot: 1*5 = 5
 Human: Hi
@@ -4573,7 +4571,7 @@ Bot: The capital of Japan is Tokyo.
 Human: What is 7+8
 Bot: 7+8 = 15.
 Human: Can you help me?
-Bot: Yes, I think so.
+Bot: Maybe.
 Human: Hey
 Bot: Hey! What's up?
 Human: Thank you
@@ -4903,7 +4901,7 @@ Bot: 1+1 = 2.
 Human: What is 7+1?
 Bot: 7+1 = 8.
 Human: Can you help me?
-Bot: Yes, I think so.
+Bot: Maybe.
 Human: What is 9 times 7?
 Bot: 9 times 7 = 63.
 Human: What is the capital of France?
@@ -5434,8 +5432,6 @@ Human: What's 2+15
 Bot: 2+15 = 17.
 Human: What's the capital of Germany?
 Bot: The capital of Germany is Berlin.
-Human: Do you like music?
-Bot: Yes, I do.
 Human: What is 10+5?
 Bot: 10+5 = 15.
 Human: What's 1+12
