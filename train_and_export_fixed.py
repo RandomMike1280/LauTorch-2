@@ -68,14 +68,16 @@ log(f"Data: {len(text):,} chars")
 # Oversample test QA pairs
 test_qa = [
     ("Human: Hello\nBot:", "Hello! How are you?"),
-    ("Human: What's 1+1?\nBot:", "1+1 equals 2!"),
-    ("Human: What's the capital of France?\nBot:", "Paris is the capital of France."),
+    ("Human: What's 9+10?\nBot:", "9+10 equals 19!"),
+    ("Human: What's the capital of Germany?\nBot:", "Berlin is the capital of Germany."),
+    ("Human: What's 3*3?\nBot:", "3*3 is 9")
 ]
-extra_parts = [p + a + "\n" for _ in range(500) for p, a in test_qa]
-extra = "".join(extra_parts)
-log(f"Extra oversampling text: {len(extra):,} chars")
+# extra_parts = [p + a + "\n" for _ in range(500) for p, a in test_qa]
+# extra = "".join(extra_parts)
+# log(f"Extra oversampling text: {len(extra):,} chars")
 
-data = np.concatenate([encode(text), encode(extra)])
+# data = np.concatenate([encode(text), encode(extra)])
+data = encode(text)
 log(f"With oversampling: {len(data):,} tokens")
 
 # Generation helper
@@ -102,10 +104,10 @@ def generate(params, prompt, max_new=100, temperature=1.0):
 # Train
 m = {k: np.zeros_like(p) for k, p in params.items()}
 v = {k: np.zeros_like(p) for k, p in params.items()}
-STEPS, BS = 5000, 16
+STEPS, BS = 15000, 16
 # Muon peak LR; effective update is lr * 0.2 * sqrt(max(rows, cols)) ~ lr * 2.7,
 # so 1e-3 base ≈ equivalent to AdamW 3e-3 (more aggressive, but Muon is well-behaved).
-MUON_LR = 1e-3
+MUON_LR = 1e-2
 
 start = time.time()
 for step in range(STEPS):
@@ -126,14 +128,16 @@ for step in range(STEPS):
             log(f"  > {repr(s)}")
             if "Hello" in p and any(w in s.lower() for w in ["hello", "hi"]):
                 correct += 1
-            elif "1+1" in p and "2" in s:
+            elif "9+10" in p and "19" in s:
                 correct += 1
             elif "France" in p and "paris" in s.lower():
                 correct += 1
-        log(f"  Correct: {correct}/3")
-        if correct == 3:
-            log("  *** ALL 3 CORRECT! ***")
-            break
+            elif "3*3" in p and "9" in s:
+                correct += 1
+        log(f"  Correct: {correct}/4")
+        if correct == 4:
+            log("  *** ALL 4 CORRECT! ***")
+            # break
     
     grads = backward_full(params, logits, y, cache)
     lr_now = get_lr(step, 200, STEPS, MUON_LR, MUON_LR * 0.1)

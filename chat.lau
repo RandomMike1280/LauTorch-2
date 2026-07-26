@@ -237,7 +237,7 @@ return o
 end
 print("Q: Hello")
 print("A:" + gen("Human: Hello\nBot:"))
-print("Q: What's 2+2")
-print("A:" + gen("Human: What's 2+2\nBot:"))
-print("Q: What's the capital of France?")
-print("A:" + gen("Human: What's the capital of France?\nBot:"))
+print("Q: Compute 7*4")
+print("A:" + gen("Human: Compute 7*4\nBot:"))
+print("Q: What's the capital of Germany?")
+print("A:" + gen("Human: What's the capital of Germany?\nBot:"))

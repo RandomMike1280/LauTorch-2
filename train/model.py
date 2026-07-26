@@ -22,8 +22,8 @@ N_HEADS = 4
 HEAD_DIM = D_MODEL // N_HEADS  # 12
 N_LAYERS = 2
 D_FF = 192
-CTX_LEN = 64
-MAX_BATCH = 16
+CTX_LEN = 80
+MAX_BATCH = 32
 
 
 def gelu(x):

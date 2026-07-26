@@ -1,0 +1,476 @@
+Human: Hello
+Bot: Hello! How are you today?
+Human: What's 1+1?
+Bot: 1+1 equals 2.
+Human: What's the capital of France?
+Bot: The capital of France is Paris.
+Human: What is 2+2?
+Bot: 2+2 equals 4.
+Human: What is 3 + 4?
+Bot: 3 + 4 equals 7.
+Human: What's 4+5
+Bot: 4+5 equals 9.
+Human: Compute 5+6
+Bot: 5+6 equals 11.
+Human: 6+7=?
+Bot: 6+7 equals 13.
+Human: What is 7 plus 8?
+Bot: 7 plus 8 equals 15.
+Human: Add 8 and 9.
+Bot: 8+9 equals 17.
+Human: Solve 9+10.
+Bot: 9+10 is 19.
+Human: What is 10 plus 11?
+Bot: 10 plus 11 is 21.
+Human: Find 11+12.
+Bot: 11+12 equals 23.
+Human: What is 12+13?
+Bot: 12+13 equals 25.
+Human: What is 13 + 14?
+Bot: 13 + 14 equals 27.
+Human: What's 14+15
+Bot: 14+15 equals 29.
+Human: Compute 15+16
+Bot: 15+16 equals 31.
+Human: 16+17=?
+Bot: 16+17 equals 33.
+Human: What is 17 plus 18?
+Bot: 17 plus 18 equals 35.
+Human: Add 18 and 19.
+Bot: 18+19 equals 37.
+Human: Solve 19+20.
+Bot: 19+20 is 39.
+Human: What is 20 plus 21?
+Bot: 20 plus 21 is 41.
+Human: Find 21+22.
+Bot: 21+22 equals 43.
+Human: What is 22+23?
+Bot: 22+23 equals 45.
+Human: What is 23 + 24?
+Bot: 23 + 24 equals 47.
+Human: What's 24+25
+Bot: 24+25 equals 49.
+Human: Compute 25+26
+Bot: 25+26 equals 51.
+Human: 26+27=?
+Bot: 26+27 equals 53.
+Human: What is 27 plus 28?
+Bot: 27 plus 28 equals 55.
+Human: Add 28 and 29.
+Bot: 28+29 equals 57.
+Human: Solve 29+30.
+Bot: 29+30 is 59.
+Human: What is 30 plus 31?
+Bot: 30 plus 31 is 61.
+Human: Find 31+32.
+Bot: 31+32 equals 63.
+Human: What is 32+33?
+Bot: 32+33 equals 65.
+Human: What is 33 + 34?
+Bot: 33 + 34 equals 67.
+Human: What's 34+35
+Bot: 34+35 equals 69.
+Human: Compute 35+36
+Bot: 35+36 equals 71.
+Human: 1+99=?
+Bot: 1+99 equals 100.
+Human: What is 2 plus 98?
+Bot: 2 plus 98 equals 100.
+Human: Add 3 and 97.
+Bot: 3+97 equals 100.
+Human: Solve 5+95.
+Bot: 5+95 is 100.
+Human: What is 7 plus 93?
+Bot: 7 plus 93 is 100.
+Human: Find 10+90.
+Bot: 10+90 equals 100.
+Human: What is 11+89?
+Bot: 11+89 equals 100.
+Human: What is 13 + 87?
+Bot: 13 + 87 equals 100.
+Human: What's 17+83
+Bot: 17+83 equals 100.
+Human: Compute 19+81
+Bot: 19+81 equals 100.
+Human: 23+77=?
+Bot: 23+77 equals 100.
+Human: What is 29 plus 71?
+Bot: 29 plus 71 equals 100.
+Human: Add 31 and 69.
+Bot: 31+69 equals 100.
+Human: Solve 37+63.
+Bot: 37+63 is 100.
+Human: What is 41 plus 59?
+Bot: 41 plus 59 is 100.
+Human: Find 43+57.
+Bot: 43+57 equals 100.
+Human: What is 47+53?
+Bot: 47+53 equals 100.
+Human: What is 100 + 1?
+Bot: 100 + 1 equals 101.
+Human: What's 150+50
+Bot: 150+50 equals 200.
+Human: Compute 200+75
+Bot: 200+75 equals 275.
+Human: 250+125=?
+Bot: 250+125 equals 375.
+Human: What is 300 plus 150?
+Bot: 300 plus 150 equals 450.
+Human: Add 50 and 49.
+Bot: 50+49 equals 99.
+Human: Solve 75+24.
+Bot: 75+24 is 99.
+Human: What is 88 plus 11?
+Bot: 88 plus 11 is 99.
+Human: Find 64+32.
+Bot: 64+32 equals 96.
+Human: What is 45+54?
+Bot: 45+54 equals 99.
+Human: What is 10-3?
+Bot: 10-3 equals 7.
+Human: What is 15 - 7?
+Bot: 15 - 7 equals 8.
+Human: What's 3-1
+Bot: 3-1 equals 2.
+Human: Compute 20-8
+Bot: 20-8 equals 12.
+Human: 9-4=?
+Bot: 9-4 equals 5.
+Human: What is 50 minus 12?
+Bot: 50 minus 12 equals 38.
+Human: Subtract 37 from 100.
+Bot: 100-37 equals 63.
+Human: Solve 12-5.
+Bot: 12-5 is 7.
+Human: What is 25 minus 13?
+Bot: 25 minus 13 is 12.
+Human: Find 40-21.
+Bot: 40-21 equals 19.
+Human: What is 75-33?
+Bot: 75-33 equals 42.
+Human: What is 88 - 44?
+Bot: 88 - 44 equals 44.
+Human: What's 60-29
+Bot: 60-29 equals 31.
+Human: Compute 7-3
+Bot: 7-3 equals 4.
+Human: 11-4=?
+Bot: 11-4 equals 7.
+Human: What is 13 minus 6?
+Bot: 13 minus 6 equals 7.
+Human: Subtract 9 from 21.
+Bot: 21-9 equals 12.
+Human: Solve 33-12.
+Bot: 33-12 is 21.
+Human: What is 45 minus 18?
+Bot: 45 minus 18 is 27.
+Human: Find 67-28.
+Bot: 67-28 equals 39.
+Human: What is 80-35?
+Bot: 80-35 equals 45.
+Human: What is 99 - 42?
+Bot: 99 - 42 equals 57.
+Human: What's 110-55
+Bot: 110-55 equals 55.
+Human: Compute 123-67
+Bot: 123-67 equals 56.
+Human: 150-78=?
+Bot: 150-78 equals 72.
+Human: What is 200 minus 100?
+Bot: 200 minus 100 equals 100.
+Human: Subtract 125 from 250.
+Bot: 250-125 equals 125.
+Human: Solve 500-250.
+Bot: 500-250 is 250.
+Human: What is 1000 minus 500?
+Bot: 1000 minus 500 is 500.
+Human: Find 5-5.
+Bot: 5-5 equals 0.
+Human: What is 10-10?
+Bot: 10-10 equals 0.
+Human: What is 20 - 20?
+Bot: 20 - 20 equals 0.
+Human: What's 33-33
+Bot: 33-33 equals 0.
+Human: Compute 50-50
+Bot: 50-50 equals 0.
+Human: 75-75=?
+Bot: 75-75 equals 0.
+Human: What is 8 minus 2?
+Bot: 8 minus 2 equals 6.
+Human: Subtract 6 from 14.
+Bot: 14-6 equals 8.
+Human: Solve 22-8.
+Bot: 22-8 is 14.
+Human: What is 36 minus 14?
+Bot: 36 minus 14 is 22.
+Human: Find 48-16.
+Bot: 48-16 equals 32.
+Human: What is 64-32?
+Bot: 64-32 equals 32.
+Human: What is 9 - 9?
+Bot: 9 - 9 equals 0.
+Human: What's 17-17
+Bot: 17-17 equals 0.
+Human: Compute 25-25
+Bot: 25-25 equals 0.
+Human: 41-41=?
+Bot: 41-41 equals 0.
+Human: What is 53 minus 53?
+Bot: 53 minus 53 equals 0.
+Human: What is 6*3?
+Bot: 6*3 equals 18.
+Human: What is 4 * 5?
+Bot: 4 * 5 equals 20.
+Human: What's 7*8
+Bot: 7*8 equals 56.
+Human: Compute 9*9
+Bot: 9*9 equals 81.
+Human: 12*11=?
+Bot: 12*11 equals 132.
+Human: What is 5 times 5?
+Bot: 5 times 5 equals 25.
+Human: Multiply 3 and 7.
+Bot: 3*7 equals 21.
+Human: Solve 8*6.
+Bot: 8*6 is 48.
+Human: What is 2 times 9?
+Bot: 2 times 9 is 18.
+Human: Find 11*4.
+Bot: 11*4 equals 44.
+Human: What is 13*3?
+Bot: 13*3 equals 39.
+Human: What is 14 * 5?
+Bot: 14 * 5 equals 70.
+Human: What's 15*4
+Bot: 15*4 equals 60.
+Human: Compute 16*3
+Bot: 16*3 equals 48.
+Human: 17*2=?
+Bot: 17*2 equals 34.
+Human: What is 2 times 2?
+Bot: 2 times 2 equals 4.
+Human: Multiply 3 and 3.
+Bot: 3*3 equals 9.
+Human: Solve 4*4.
+Bot: 4*4 is 16.
+Human: What is 6 times 6?
+Bot: 6 times 6 is 36.
+Human: Find 7*7.
+Bot: 7*7 equals 49.
+Human: What is 8*8?
+Bot: 8*8 equals 64.
+Human: What is 10 * 10?
+Bot: 10 * 10 equals 100.
+Human: What's 2*11
+Bot: 2*11 equals 22.
+Human: Compute 3*12
+Bot: 3*12 equals 36.
+Human: 4*11=?
+Bot: 4*11 equals 44.
+Human: What is 5 times 12?
+Bot: 5 times 12 equals 60.
+Human: Multiply 6 and 11.
+Bot: 6*11 equals 66.
+Human: Solve 7*12.
+Bot: 7*12 is 84.
+Human: What is 2 times 50?
+Bot: 2 times 50 is 100.
+Human: Find 3*25.
+Bot: 3*25 equals 75.
+Human: What is 4*25?
+Bot: 4*25 equals 100.
+Human: What is 5 * 20?
+Bot: 5 * 20 equals 100.
+Human: What's 6*15
+Bot: 6*15 equals 90.
+Human: Compute 8*12
+Bot: 8*12 equals 96.
+Human: 11*11=?
+Bot: 11*11 equals 121.
+Human: What is 12 times 12?
+Bot: 12 times 12 equals 144.
+Human: Multiply 13 and 4.
+Bot: 13*4 equals 52.
+Human: Solve 14*6.
+Bot: 14*6 is 84.
+Human: What is 15 times 5?
+Bot: 15 times 5 is 75.
+Human: What is 12/3?
+Bot: 12/3 equals 4.
+Human: What is 8 / 2?
+Bot: 8 / 2 equals 4.
+Human: What's 10/2
+Bot: 10/2 equals 5.
+Human: Compute 15/5
+Bot: 15/5 equals 3.
+Human: 20/4=?
+Bot: 20/4 equals 5.
+Human: What is 9 divided by 3?
+Bot: 9 divided by 3 equals 3.
+Human: Divide 24 by 6.
+Bot: 24/6 equals 4.
+Human: Solve 30/5.
+Bot: 30/5 is 6.
+Human: What is 36 divided by 6?
+Bot: 36 divided by 6 is 6.
+Human: Find 42/7.
+Bot: 42/7 equals 6.
+Human: What is 48/8?
+Bot: 48/8 equals 6.
+Human: What is 54 / 9?
+Bot: 54 / 9 equals 6.
+Human: What's 60/10
+Bot: 60/10 equals 6.
+Human: Compute 66/11
+Bot: 66/11 equals 6.
+Human: 72/12=?
+Bot: 72/12 equals 6.
+Human: What is 84 divided by 12?
+Bot: 84 divided by 12 equals 7.
+Human: Divide 90 by 9.
+Bot: 90/9 equals 10.
+Human: Solve 96/8.
+Bot: 96/8 is 12.
+Human: What is 100 divided by 10?
+Bot: 100 divided by 10 is 10.
+Human: Find 108/12.
+Bot: 108/12 equals 9.
+Human: What is 120/10?
+Bot: 120/10 equals 12.
+Human: What is 144 / 12?
+Bot: 144 / 12 equals 12.
+Human: What's 150/10
+Bot: 150/10 equals 15.
+Human: Compute 160/16
+Bot: 160/16 equals 10.
+Human: 180/12=?
+Bot: 180/12 equals 15.
+Human: What is 200 divided by 20?
+Bot: 200 divided by 20 equals 10.
+Human: Divide 14 by 7.
+Bot: 14/7 equals 2.
+Human: Solve 28/7.
+Bot: 28/7 is 4.
+Human: What is 35 divided by 7?
+Bot: 35 divided by 7 is 5.
+Human: Find 49/7.
+Bot: 49/7 equals 7.
+Human: What is 56/7?
+Bot: 56/7 equals 8.
+Human: What is 63 / 7?
+Bot: 63 / 7 equals 9.
+Human: What's 22/11
+Bot: 22/11 equals 2.
+Human: Compute 33/11
+Bot: 33/11 equals 3.
+Human: 44/11=?
+Bot: 44/11 equals 4.
+Human: What is 55 divided by 11?
+Bot: 55 divided by 11 equals 5.
+Human: Divide 77 by 11.
+Bot: 77/11 equals 7.
+Human: Solve 26/13.
+Bot: 26/13 is 2.
+Human: What is 39 divided by 13?
+Bot: 39 divided by 13 is 3.
+Human: Find 52/13.
+Bot: 52/13 equals 4.
+Human: What is 65/13?
+Bot: 65/13 equals 5.
+Human: What is the capital of France?
+Bot: The capital of France is Paris.
+Human: Capital of France?
+Bot: The capital of France is Paris.
+Human: Tell me the capital of Japan
+Bot: The capital of Japan is Tokyo.
+Human: Name the capital of Japan.
+Bot: The capital of Japan is Tokyo.
+Human: What is Italy's capital?
+Bot: The capital of Italy is Rome.
+Human: Which city is the capital of Italy?
+Bot: The capital of Italy is Rome.
+Human: Do you know the capital of Germany?
+Bot: The capital of Germany is Berlin.
+Human: What is the capital city of Germany?
+Bot: The capital of Germany is Berlin.
+Human: Give me the capital of Spain.
+Bot: The capital of Spain is Madrid.
+Human: What's the capital of Spain?
+Bot: The capital of Spain is Madrid.
+Human: What is the capital of Canada?
+Bot: The capital of Canada is Ottawa.
+Human: Capital of Canada?
+Bot: The capital of Canada is Ottawa.
+Human: Tell me the capital of Brazil
+Bot: The capital of Brazil is Brasilia.
+Human: Name the capital of Brazil.
+Bot: The capital of Brazil is Brasilia.
+Human: What is Egypt's capital?
+Bot: The capital of Egypt is Cairo.
+Human: Which city is the capital of Egypt?
+Bot: The capital of Egypt is Cairo.
+Human: Do you know the capital of Australia?
+Bot: The capital of Australia is Canberra.
+Human: What is the capital city of Australia?
+Bot: The capital of Australia is Canberra.
+Human: Give me the capital of India.
+Bot: The capital of India is New Delhi.
+Human: What's the capital of India?
+Bot: The capital of India is New Delhi.
+Human: What is the capital of China?
+Bot: The capital of China is Beijing.
+Human: Capital of China?
+Bot: The capital of China is Beijing.
+Human: Tell me the capital of Russia
+Bot: The capital of Russia is Moscow.
+Human: Name the capital of Russia.
+Bot: The capital of Russia is Moscow.
+Human: What is Mexico's capital?
+Bot: The capital of Mexico is Mexico City.
+Human: Which city is the capital of Mexico?
+Bot: The capital of Mexico is Mexico City.
+Human: Do you know the capital of Argentina?
+Bot: The capital of Argentina is Buenos Aires.
+Human: What is the capital city of Argentina?
+Bot: The capital of Argentina is Buenos Aires.
+Human: Give me the capital of Norway.
+Bot: The capital of Norway is Oslo.
+Human: What's the capital of Norway?
+Bot: The capital of Norway is Oslo.
+Human: What is the capital of Sweden?
+Bot: The capital of Sweden is Stockholm.
+Human: Capital of Sweden?
+Bot: The capital of Sweden is Stockholm.
+Human: Tell me the capital of Portugal
+Bot: The capital of Portugal is Lisbon.
+Human: Name the capital of Portugal.
+Bot: The capital of Portugal is Lisbon.
+Human: What is Greece's capital?
+Bot: The capital of Greece is Athens.
+Human: Which city is the capital of Greece?
+Bot: The capital of Greece is Athens.
+Human: Do you know the capital of Turkey?
+Bot: The capital of Turkey is Ankara.
+Human: What is the capital city of Turkey?
+Bot: The capital of Turkey is Ankara.
+Human: Give me the capital of Thailand.
+Bot: The capital of Thailand is Bangkok.
+Human: What's the capital of Thailand?
+Bot: The capital of Thailand is Bangkok.
+Human: What is the capital of Vietnam?
+Bot: The capital of Vietnam is Hanoi.
+Human: Capital of Vietnam?
+Bot: The capital of Vietnam is Hanoi.
+Human: Tell me the capital of Kenya
+Bot: The capital of Kenya is Nairobi.
+Human: Name the capital of Kenya.
+Bot: The capital of Kenya is Nairobi.
+Human: What is Peru's capital?
+Bot: The capital of Peru is Lima.
+Human: Which city is the capital of Peru?
+Bot: The capital of Peru is Lima.
+Human: Do you know the capital of Chile?
+Bot: The capital of Chile is Santiago.
+Human: What is the capital city of Chile?
+Bot: The capital of Chile is Santiago.
