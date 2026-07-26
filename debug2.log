@@ -1,0 +1,10 @@
+
+[DEBUG] exit_code=0, success=True
+[DEBUG] stdout=
+Q: Hello
+A: Hello! How are you today? 
+Q: What's 1+1?
+A:1+1 equals 2! 
+Q: What's the capital of France?
+A: The capital of France is of Bot:Paris is. 
+[DEBUG] stderr=

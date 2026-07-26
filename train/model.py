@@ -2,10 +2,10 @@
 
 Architecture (must match the Lau inference very closely):
 - vocab_size = 95 (all printable ASCII 32-126)
-- d_model = 32
+- d_model = 48
 - n_layers = 2
-- n_heads = 4 (head_dim = 8)
-- d_ff = 128
+- n_heads = 4 (head_dim = 12)
+- d_ff = 192
 - ctx_len = 64
 - Tied input/output embeddings
 - Pre-LayerNorm
@@ -16,11 +16,12 @@ import numpy as np
 
 VOCAB_SIZE = 95
 VOCAB = ''.join(chr(32 + i) for i in range(VOCAB_SIZE))  # ' ' to '~'
-D_MODEL = 32
+HEAD_DIM = 12
+D_MODEL = 48
 N_HEADS = 4
-HEAD_DIM = D_MODEL // N_HEADS  # 8
+HEAD_DIM = D_MODEL // N_HEADS  # 12
 N_LAYERS = 2
-D_FF = 128
+D_FF = 192
 CTX_LEN = 64
 MAX_BATCH = 16
 
