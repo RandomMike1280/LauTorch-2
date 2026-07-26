@@ -22,14 +22,13 @@ N_HEADS = 4
 HEAD_DIM = D_MODEL // N_HEADS  # 12
 N_LAYERS = 2
 D_FF = 192
-CTX_LEN = 80
+CTX_LEN = 128
 MAX_BATCH = 32
 
 
 def gelu(x):
     # Tanh approximation of GELU, matches common transformer impl
     return 0.5 * x * (1.0 + np.tanh(0.7978845608 * (x + 0.044715 * x**3)))
-
 
 def gelu_grad(x):
     # Derivative of tanh approximation - needed for backward
@@ -39,7 +38,6 @@ def gelu_grad(x):
     dinner = 0.7978845608 * (1.0 + 3.0 * 0.044715 * x**2)
     return 0.5 * (1.0 + t) + 0.5 * x * sech2 * dinner
 
-
 def layernorm(x, gamma, beta, eps=1e-5):
     """x: (..., D). Returns (out, x_in, mean, var, x_norm)."""
     mean = x.mean(axis=-1, keepdims=True)
@@ -47,7 +45,6 @@ def layernorm(x, gamma, beta, eps=1e-5):
     x_norm = (x - mean) / np.sqrt(var + eps)
     out = x_norm * gamma + beta
     return out, x, mean, var, x_norm
-
 
 def layernorm_grad(dout, x_in, mean, var, x_norm, gamma, eps=1e-5):
     """Backward of layernorm. dout: gradient of L w.r.t. layernorm output.
@@ -66,12 +63,10 @@ def layernorm_grad(dout, x_in, mean, var, x_norm, gamma, eps=1e-5):
     dbeta = np.sum(dout, axis=tuple(range(len(dout.shape) - 1)))
     return dx, dgamma, dbeta
 
-
 def softmax(x, axis=-1):
     x_max = x.max(axis=axis, keepdims=True)
     e = np.exp(x - x_max)
     return e / e.sum(axis=axis, keepdims=True)
-
 
 def cross_entropy(logits, targets):
     # logits: (B, T, V), targets: (B, T)
@@ -80,7 +75,6 @@ def cross_entropy(logits, targets):
     log_probs = log_probs - np.log(np.exp(log_probs).sum(axis=-1, keepdims=True))
     nll = -log_probs[np.arange(B)[:, None], np.arange(T)[None, :], targets]
     return nll.mean(), log_probs, nll
-
 
 def cross_entropy_grad(logits, targets):
     # logits: (B, T, V), targets: (B, T)
@@ -91,7 +85,6 @@ def cross_entropy_grad(logits, targets):
     probs[np.arange(B)[:, None], np.arange(T)[None, :], targets] -= 1.0
     probs /= (B * T)
     return probs
-
 
 def init_weights(seed=0):
     rng = np.random.RandomState(seed)
@@ -116,7 +109,6 @@ def init_weights(seed=0):
     params['lnf_g'] = np.ones(D_MODEL, dtype=np.float32)
     params['lnf_b'] = np.zeros(D_MODEL, dtype=np.float32)
     return params
-
 
 def forward(params, tokens, save_cache=True):
     """Forward pass. tokens: (B, T) of int ids. Returns logits (B, T, V)."""
@@ -166,7 +158,6 @@ def forward(params, tokens, save_cache=True):
     # Tied embedding: logits = x @ emb.T
     logits = x @ params['emb'].T
     return logits, cache
-
 
 def backward(params, tokens, logits, targets, cache):
     """Backward pass. Returns grads dict. cache has forward intermediates."""
@@ -310,7 +301,6 @@ def forward_full(params, tokens):
     logits = x_post_f @ params['emb'].T
     return logits, cache
 
-
 def backward_full(params, logits, targets, cache):
     grads = {}
     B, T, V = logits.shape
@@ -413,11 +403,9 @@ def backward_full(params, logits, targets, cache):
         # We'll handle the embedding grad separately using dlogits path
     return grads
 
-
 def param_size(params):
     total = sum(p.size for p in params.values())
     return total
-
 
 def list_param_keys(params):
     return list(params.keys())

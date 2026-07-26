@@ -9,7 +9,7 @@ from train import encode, get_batch, get_lr
 # ---------------- Muon optimizer (2D matrices) + AdamW (1D params) ----------------
 # Mirrors train/train_big.py implementation, ported here so we don't pull in its
 # data builder. Newton-Schulz5 orthogonalization matches Keller Jordan's spec.
-def _zeropower_via_newtonschulz5(G, steps=8 ):
+def _zeropower_via_newtonschulz5(G, steps=8):
     a, b, c = (3.4445, -4.7750, 2.0315)
     X = G.astype(np.float32)
     if X.ndim != 2:
@@ -27,7 +27,7 @@ def _zeropower_via_newtonschulz5(G, steps=8 ):
     return X
 
 
-def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=5, weight_decay=0.0):
+def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=8, weight_decay=0.0):
     """Muon for 2D weights, AdamW for 1D params (LN gammas/biases, embeddings)."""
     for k in params:
         g = grads[k]
