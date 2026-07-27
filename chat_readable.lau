@@ -1,10 +1,9 @@
 --@cost(t=0)
 varol data,math,LO0,LO1,L=req("weights.laum"),req("utils.laum"),2,14,""
 varol C,W=data.config,data.weights
-varol V,D,H,HD,FF,CTX,E=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e
+varol V,D,H,HD,FF,CTX,E,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e, 10000
 -- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)
 -- where k indexes the pair (k = 1..HD/2) and p = 1..CTX.
-varol THETA=10000
 varol CS,SN={},{}
 for i=1,CTX do
     varol cr,sr={},{}
@@ -109,10 +108,7 @@ end
 -- Note: T is mutated; the caller is responsible for providing a copy if needed.
 func rp(T,p)
     for k=1,HD/2 do
-        varol a=T[2*k-1]
-        varol b=T[2*k]
-        varol c=CS[p][k]
-        varol s=SN[p][k]
+        varol a,b,c,s=T[2*k-1],T[2*k],CS[p][k],SN[p][k]
         T[2*k-1]=a*c-b*s
         T[2*k]=a*s+b*c
     end
@@ -132,10 +128,8 @@ func attn(x,LOff,K,V)
             vv+=x[j]*W[LOff+4][j][i]
         end
         TQ[i]=qq
-        TK[i]=kk
-        TV[i]=vv
-        K[P][i]=kk
-        V[P][i]=vv
+        TK[i]=K[P][i]=kk
+        TV[i]=V[P][i]=vv
     end
     -- Apply RoPE to Q and K at the current position P.
     -- After this, TQ and TK hold rotated Q/K, and K[P] holds the rotated K.
@@ -157,8 +151,7 @@ func attn(x,LOff,K,V)
             if sc[i]>mx then mx=sc[i] end
         end
         for i=1,P do
-            sc[i]=math.exp(sc[i]-mx)
-            sm=sm+sc[i]
+            sm+=sc[i]=E^(sc[i]-mx)
         end
         for i=1,P do
             sc[i]=sc[i]/sm
