@@ -1,9 +1,7 @@
--- Using pcall is highly recommended for HTTP due to timeouts/limits
-varol success, response = pcall(http.get, "https://raw.githubusercontent.com/RandomMike1280/DroneFarm/main/versions.json")
+varol s,a = task.clock()
 
-if success == true then
-    varol data = http.jsonDecode(response)
-    print(data)
-else
-    player.alert("HTTP Request Failed: Time-out or Limit reached.")
+for _ = 1, 100 do
+    a = 1
 end
+
+print((task.clock()-s)/100)

@@ -1,5 +1,5 @@
 --@cost(t=0)
-varol data,math,LO0,LO1,L=req("download_weights.laum"),req("utils.laum"),2,14,""
+varol data,math,LO0,LO1,L=req("weights.laum"),req("utils.laum"),2,14,""
 varol C,W=data.config,data.weights
 varol V,D,H,HD,FF,CTX,E,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e, 10000
 -- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)
@@ -93,13 +93,16 @@ for j=1,D do
 x[j]=(x[j]-m)*s*g[j]+b[j]
 end
 end
--- Tanh approximation
+-- Tanh approximation. Single-statement; uses math.clamp to saturate
+-- x to [-20, 20] so E^(2x) stays in float range. Overflow-proof for
+-- any input (saturates to +/-1 for |x| > 20).
 func th(x)
+x=math.clamp(x,-20,20)
 return (E^x-E^(-x))/(E^x+E^(-x))
 end
 -- GELU
 func gl(x)
-return 0.5*x*(1+th(0.7978845608*(x+0.044715*x*x*x)))
+return 0.5*x*(1+th(0.7978845608*(x+0.044715*x^3)))
 end
 -- RoPE: rotate vector in-place using position p's precomputed cos/sin
 -- Operates on pairs (T[2k-1], T[2k]) for k = 1..HD/2.
@@ -267,7 +270,7 @@ return o
 end
 print("Q: Hello")
 print("A:" + gen("Human: Hello\nBot:"))
-print("Q: Compute 7*4")
-print("A:" + gen("Human: Compute 7*4\nBot:"))
-print("Q: What's the capital of Germany?")
-print("A:" + gen("Human: What's the capital of Germany?\nBot:"))
+-- print("Q: Compute 7*4")
+-- print("A:" + gen("Human: Compute 7*4\nBot:"))
+-- print("Q: What's the capital of Germany?")
+-- print("A:" + gen("Human: What's the capital of Germany?\nBot:"))

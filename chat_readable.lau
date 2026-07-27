@@ -93,9 +93,11 @@ func ln(x,g,b)
         x[j]=(x[j]-m)*s*g[j]+b[j]
     end
 end
--- Tanh approximation
+-- Tanh approximation. Single-statement; uses math.clamp to saturate
+-- x to [-20, 20] so E^(2x) stays in float range. Overflow-proof for
+-- any input (saturates to +/-1 for |x| > 20).
 func th(x)
-    return (E^x-E^(-x))/(E^x+E^(-x))
+    return 1-2/(E^(2*math.clamp(x,-20,20))+1)
 end
 -- GELU
 func gl(x)
