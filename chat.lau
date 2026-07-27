@@ -1,5 +1,5 @@
 --@cost(t=0)
-varol data,math,LO0,LO1,L=req("weights.laum"),req("utils.laum"),2,14,""
+varol data,math,LO0,LO1,L=req("download_weights.laum"),req("utils.laum"),2,14,""
 varol C,W=data.config,data.weights
 varol V,D,H,HD,FF,CTX,E,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e, 10000
 -- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)

@@ -332,6 +332,8 @@ def forward_full(params, tokens):
         cache[f'l{i}.k_h'] = k_h
         scale = 1.0 / np.sqrt(HEAD_DIM)
         scores = (q_h @ k_h.transpose(0, 1, 3, 2)) * scale
+        # S_max for QK-Clip: max logit over batch, heads, positions (before causal mask)
+        cache[f'l{i}.S_max'] = float(scores.max())
         mask = np.tril(np.ones((T, T), dtype=np.float32))
         scores_masked = scores * mask + (1.0 - mask) * (-1e9)
         attn = softmax(scores_masked, axis=-1)

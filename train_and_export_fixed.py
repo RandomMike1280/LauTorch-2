@@ -6,9 +6,14 @@ from model import (VOCAB_SIZE, VOCAB, D_MODEL, N_LAYERS, N_HEADS, HEAD_DIM,
                    D_FF, CTX_LEN, init_weights, forward_full, backward_full, param_size)
 from train import encode, get_batch, get_lr
 
-# ---------------- Muon optimizer (2D matrices) + AdamW (1D params) ----------------
-# Mirrors train/train_big.py implementation, ported here so we don't pull in its
-# data builder. Newton-Schulz5 orthogonalization matches Keller Jordan's spec.
+# ---------------- MuonClip optimizer (2D matrices) + AdamW (1D params) ----------------
+# MuonClip = Muon (Newton-Schulz orthogonalization) + weight decay + QK-Clip.
+# From paper 2507.20534v2:
+#   - Momentum μ=0.95, weight decay λ=0.1, QK-Clip threshold τ=100
+#   - QK-Clip scales W_q/W_k post-optimizer step to bound attention logits.
+QK_CLIP_TAU = 100.0
+
+
 def _zeropower_via_newtonschulz5(G, steps=8):
     a, b, c = (3.4445, -4.7750, 2.0315)
     X = G.astype(np.float32)
@@ -27,14 +32,20 @@ def _zeropower_via_newtonschulz5(G, steps=8):
     return X
 
 
-def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=8, weight_decay=0.0):
-    """Muon for 2D weights, AdamW for 1D params (LN gammas/biases, embeddings)."""
+def muonclip_step(params, grads, m, v, step, lr, momentum=0.95,
+                  ns_steps=8, weight_decay=0.1, cache=None):
+    """MuonClip: Muon + weight decay + QK-Clip.
+    - Muon for 2D weight matrices (wq, wk, wv, wo, w1, w2, emb)
+    - AdamW for 1D params (layernorm gammas/biases)
+    - QK-Clip for wq/wk in every attention layer
+    """
     for k in params:
         g = grads[k]
         if g.ndim >= 2:
             m[k] = momentum * m[k] + g
             update = _zeropower_via_newtonschulz5(m[k], steps=ns_steps)
             scale = 0.2 * math.sqrt(max(update.shape[0], update.shape[1]))
+            # MuonClip weight decay: λ * W_{t-1}
             params[k] -= lr * scale * update + lr * weight_decay * params[k]
         else:
             m[k] = 0.9 * m[k] + 0.1 * g
@@ -42,6 +53,15 @@ def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=8, weight_d
             m_hat = m[k] / (1 - 0.9 ** step)
             v_hat = v[k] / (1 - 0.95 ** step)
             params[k] -= lr * (m_hat / (np.sqrt(v_hat) + 1e-8) + weight_decay * params[k])
+
+    # QK-Clip: post-optimizer scaling of W_q and W_k
+    if cache is not None:
+        for i in range(N_LAYERS):
+            S_max = cache.get(f'l{i}.S_max', 0.0)
+            if S_max > QK_CLIP_TAU:
+                gamma = QK_CLIP_TAU / S_max
+                params[f'l{i}.wq'] *= math.sqrt(gamma)
+                params[f'l{i}.wk'] *= math.sqrt(gamma)
 
 log = lambda msg: (print(msg), sys.stdout.flush())
 
@@ -140,7 +160,7 @@ for step in range(STEPS):
     
     grads = backward_full(params, logits, y, cache)
     lr_now = get_lr(step, 200, STEPS, MUON_LR, MUON_LR * 0.1)
-    muon_step(params, grads, m, v, step + 1, lr_now)
+    muonclip_step(params, grads, m, v, step + 1, lr_now, cache=cache)
 
 log(f"Training done. Final loss: {loss:.4f}")
 
