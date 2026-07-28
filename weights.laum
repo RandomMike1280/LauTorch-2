@@ -1,3 +1,6 @@
+varol config, vocab_chars, vocab_size, d_model, n_layers, n_heads, head_dim, d_ff, ctx_len, weights, emb, ln1_g, ln1_b, wq,wk, wv, wo, ln2_g, ln2_b, w1, b1, w2, b2, lnf_g, lnf_b
+
+
 return {
   config={
     vocab_size=95,
@@ -1135,3 +1138,4 @@ return {
     },
   },
 }
+

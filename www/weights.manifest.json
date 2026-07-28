@@ -1,0 +1,7 @@
+{
+  "chunk_count": 652,
+  "chunk_size": 2000,
+  "total_bytes": 1303988,
+  "sha256": "f70cfa2cc6aeebf0d41357042948c3bbeba2cee8108aaf0bcd6d275905eebf7d",
+  "filename_template": "weights.part%03d.json"
+}

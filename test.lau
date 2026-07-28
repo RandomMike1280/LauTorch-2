@@ -1,0 +1,7 @@
+varol s,a = task.clock()
+
+for _ = 1, 100 do
+    a = 1
+end
+
+print((task.clock()-s)/100)
