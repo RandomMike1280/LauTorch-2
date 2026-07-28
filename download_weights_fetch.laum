@@ -1,0 +1,68 @@
+--@cost(t=0)
+-- download_weights_fetch.laum
+-- Orchestrates manifest fetch, chunk download, JSON parse, and returns the
+-- assembled {config, vocab_chars, weights} table.
+-- Depends on: download_weights_http_fetch.laum
+--             download_weights_parse_weights.laum
+-- Usage:   varol data = req("download_weights_fetch.laum")
+
+varol _h = req("download_weights_http_fetch.laum")
+varol vocab_chars   = _h.vocab_chars
+varol httpGet      = _h.httpGet
+varol fetchManifest = _h.fetchManifest
+varol chunkUrl     = _h.chunkUrl
+varol base_url    = _h.base_url
+varol manifest_url = _h.manifest_url
+varol parseJson   = req("download_weights_parse_weights.laum")
+
+varol manifest = fetchManifest(manifest_url)
+if manifest == null then
+    return null
+end
+
+varol chunk_count = manifest.chunk_count
+varol chunk_size = manifest.chunk_size
+varol fname_template = manifest.filename_template
+
+-- Compute padding width from chunk_count (3 digits minimum).
+varol pad_width = #tostring(chunk_count)
+if pad_width < 3 then
+    pad_width = 3
+end
+
+print("download_weights: manifest OK, fetching " + chunk_count + " chunks of " + chunk_size + " bytes")
+
+-- Fetch each chunk in order and concatenate into one body string.
+-- Rate limit: wait 1 second between requests to stay under GitHub's 70 req/min cap.
+-- Also print progress every 50 chunks so the user can see forward motion.
+varol body = ""
+varol i = 1
+while i <= chunk_count do
+    varol url = chunkUrl(fname_template, i, pad_width)
+    varol chunk = httpGet(url)
+    if chunk == null then
+        print("download_weights: chunk " + i + " failed permanently")
+        return null
+    end
+    body = body + chunk
+    if i % 50 == 0 OR i == chunk_count then
+        print("download_weights: chunk " + i + " / " + chunk_count + " (" + ((i * 100) / chunk_count) + "%)")
+    end
+    if i < chunk_count then
+        task.wait(1)
+    end
+    i = i + 1
+end
+
+print("download_weights: assembled body, length=" + #body)
+
+varol parsed = parseJson(body)
+if parsed == null then
+    return null
+end
+
+return {
+    config      = parsed.config,
+    vocab_chars = vocab_chars,
+    weights     = parsed.weights,
+}

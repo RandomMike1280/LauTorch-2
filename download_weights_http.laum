@@ -1,0 +1,223 @@
+--@cost(t=0)
+-- download_weights_http.laum
+-- HTTP utilities and static data for chunked weight download.
+-- Required by: download_weights_fetch.laum
+
+-- ============================================================
+-- Static vocab (95 printable ASCII chars, taken from weights.laum)
+-- ============================================================
+
+varol vocab_chars = {
+    " ", "!", "\"", "#", "$", "%", "&", "'", "(", ")",
+    "*", "+", ",", "-", ".", "/",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    ":", ";", "<", "=", ">", "?", "@",
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+    "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
+    "U", "V", "W", "X", "Y", "Z",
+    "[", "\\", "]", "^", "_", "`",
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+    "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+    "u", "v", "w", "x", "y", "z",
+    "{", "|", "}", "~",
+}
+
+-- ============================================================
+-- HTTP constants and helpers
+-- ============================================================
+
+varol base_url = "https://raw.githubusercontent.com/RandomMike1280/LauTorch-2/main/www/"
+varol manifest_url = base_url + "weights.manifest.json"
+
+-- Fetch a URL with retries (3 attempts, 1s backoff between failures).
+-- Returns the body on success, null on permanent failure.
+func httpGet(url)
+varol attempts = 0
+while attempts < 3 do
+    attempts = attempts + 1
+    varol ok, body = pcall(http.get, url)
+    if ok == true then
+        return body
+    end
+    print("download_weights: GET " + url + " attempt " + attempts + " failed: " + body)
+    if attempts < 3 then
+        task.wait(1)
+    end
+end
+return null
+end
+
+-- Pad an integer with leading zeros to a given width. tostring(i) gives us
+-- the decimal digits; we prepend "0" until #s >= width.
+func padInt(n, width)
+varol s = tostring(n)
+while #s < width do
+    s = "0" + s
+end
+return s
+end
+
+-- ============================================================
+-- Manifest parser
+--
+-- The manifest is JSON like: {"chunk_count": N, "chunk_size": S,
+--   "total_bytes": T, "sha256": "...", "filename_template": "..."}.
+-- We parse it by hand because http.jsonDecode is unreliable on this runtime.
+-- The manifest is tiny (~200 chars), so a focused parser is easy.
+--
+-- Returns {chunk_count=N, chunk_size=S, filename_template=T} on success,
+-- null on failure.
+-- ============================================================
+
+func fetchManifest(url)
+varol manifestRaw = httpGet(url)
+if manifestRaw == null then
+    print("download_weights: failed to fetch manifest")
+    return null
+end
+-- Hand-parse the tiny manifest. We only need three number/string fields.
+-- The JSON shape is fixed by tools/chunk_weights.py.
+-- Look for `"chunk_count": <int>`, `"chunk_size": <int>`,
+-- `"filename_template": "<str>"`.
+
+-- Parse "chunk_count" -> integer.
+-- Skip past `"chunk_count"` literal, then ":", then optional ws, then int.
+varol pos = string.find(manifestRaw, "\"chunk_count\"", 1, true)
+if pos == null then
+    print("download_weights: manifest missing chunk_count")
+    return null
+end
+pos = pos + #"\"chunk_count\""
+-- skip past ':'
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+-- skip whitespace
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+-- parse integer
+varol n_start = pos
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c >= "0" AND c <= "9" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+varol chunk_count = tonumber(string.sub(manifestRaw, n_start, pos - 1))
+
+-- Parse "chunk_size" -> integer. Same pattern.
+pos = string.find(manifestRaw, "\"chunk_size\"", 1, true)
+if pos == null then
+    print("download_weights: manifest missing chunk_size")
+    return null
+end
+pos = pos + #"\"chunk_size\""
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+n_start = pos
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c >= "0" AND c <= "9" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+varol chunk_size = tonumber(string.sub(manifestRaw, n_start, pos - 1))
+
+-- Parse "filename_template" -> string. The pattern stored by chunk_weights.py
+-- is like "weights.part%03d.json" — no JSON escapes, no embedded quotes.
+pos = string.find(manifestRaw, "\"filename_template\"", 1, true)
+if pos == null then
+    print("download_weights: manifest missing filename_template")
+    return null
+end
+pos = pos + #"\"filename_template\""
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+while pos <= #manifestRaw do
+    varol c = string.sub(manifestRaw, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+if string.sub(manifestRaw, pos, pos) ~= "\"" then
+    print("download_weights: filename_template not a string")
+    return null
+end
+varol s_start = pos + 1
+varol s_end = string.find(manifestRaw, "\"", s_start, true)
+if s_end == null then
+    print("download_weights: filename_template unterminated")
+    return null
+end
+varol filename_template = string.sub(manifestRaw, s_start, s_end - 1)
+
+return {
+    chunk_count      = chunk_count,
+    chunk_size       = chunk_size,
+    filename_template = filename_template,
+}
+end
+
+-- Build the URL for chunk index `i` using the template.
+-- The template is always "weights.part%0Nd.json" — we split it on the '%',
+-- substitute the padded index, and concatenate.
+func chunkUrl(tmpl, i, pad)
+varol pct = string.find(tmpl, "%", 1, true)
+if pct == null then
+    -- No placeholder; just append the index.
+    return base_url + tmpl + tostring(i)
+end
+varol prefix = string.sub(tmpl, 1, pct - 1)
+-- Find the suffix after the placeholder. We don't need to parse the
+-- printf-style spec; the template format is fixed (always %0Nd), so the
+-- suffix begins right after the second 'd'.
+varol suffix_start = pct + 1
+-- Skip past the digit-width spec, then past the 'd'.
+while suffix_start <= #tmpl do
+    varol c = string.sub(tmpl, suffix_start, suffix_start)
+    if c == "d" then
+        suffix_start = suffix_start + 1
+        break
+    end
+    suffix_start = suffix_start + 1
+end
+varol suffix = string.sub(tmpl, suffix_start, #tmpl)
+return base_url + prefix + padInt(i, pad) + suffix
+end

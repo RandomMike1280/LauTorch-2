@@ -1,0 +1,317 @@
+--@cost(t=0)
+-- download_weights_parse.laum
+-- Hand-rolled JSON parser. Exports parseJson(body) which returns
+-- {config=..., weights=...} or null on parse error.
+-- No external dependencies.
+
+-- ============================================================
+-- Hand-rolled JSON parser
+--
+-- All functions take (s, p) where p is a 1-based index into s.
+-- They return (value, newP).
+-- Numbers in JSON may have a leading '-' and contain digits and '.'.
+-- No scientific notation appears in this particular JSON.
+-- ============================================================
+
+-- Skip past spaces, tabs, newlines, and carriage returns.
+-- Does NOT skip commas (commas are structural separators in JSON arrays/objects).
+func skipWs(s, p)
+while p <= #s do
+    varol c = string.sub(s, p, p)
+    if c == " " then
+        p = p + 1
+    elseif c == "\t" then
+        p = p + 1
+    elseif c == "\n" then
+        p = p + 1
+    elseif c == "\r" then
+        p = p + 1
+    else
+        break
+    end
+end
+return p
+end
+
+-- Returns true if c is a decimal digit, false otherwise.
+func isDigit(c)
+if c == "0" then return true end
+if c == "1" then return true end
+if c == "2" then return true end
+if c == "3" then return true end
+if c == "4" then return true end
+if c == "5" then return true end
+if c == "6" then return true end
+if c == "7" then return true end
+if c == "8" then return true end
+if c == "9" then return true end
+return false
+end
+
+-- Scan a JSON number starting at p (caller has already confirmed the char).
+-- Returns (value, newP).
+-- Accepts the JSON number grammar: optional '-', digits, optional '.digits',
+-- optional exponent ('e' or 'E' followed by optional sign and digits).
+func parseNum(s, p)
+varol start = p
+if string.sub(s, p, p) == "-" then
+    p = p + 1
+end
+while p <= #s do
+    varol c = string.sub(s, p, p)
+    if isDigit(c) then
+        p = p + 1
+    else
+        break
+    end
+end
+if p <= #s then
+    if string.sub(s, p, p) == "." then
+        p = p + 1
+        while p <= #s do
+            varol c = string.sub(s, p, p)
+            if isDigit(c) then
+                p = p + 1
+            else
+                break
+            end
+        end
+    end
+end
+if p <= #s then
+    varol ec = string.sub(s, p, p)
+    if ec == "e" OR ec == "E" then
+        p = p + 1
+        if p <= #s then
+            varol sc = string.sub(s, p, p)
+            if sc == "+" OR sc == "-" then
+                p = p + 1
+            end
+        end
+        while p <= #s do
+            varol c = string.sub(s, p, p)
+            if isDigit(c) then
+                p = p + 1
+            else
+                break
+            end
+        end
+    end
+end
+varol token = string.sub(s, start, p - 1)
+return tonumber(token), p
+end
+
+-- Parse a JSON row = array of numbers, e.g. [1.0, 2.0, -3.5]
+-- Returns (list, newP) where list = {n1, n2, ...}.
+func parseRow(s, p)
+varol out = {}
+if string.sub(s, p, p) ~= "[" then
+    print("download_weights: row expected '[' at " + p)
+    return out, p
+end
+p = p + 1
+p = skipWs(s, p)
+if string.sub(s, p, p) == "]" then
+    return out, p + 1
+end
+while true do
+    p = skipWs(s, p)
+    varol v, np = parseNum(s, p)
+    out[#out + 1] = v
+    p = skipWs(s, np)
+    varol c = string.sub(s, p, p)
+    if c == "," then
+        p = p + 1
+    elseif c == "]" then
+        return out, p + 1
+    else
+        print("download_weights: row expected ',' or ']' at " + p)
+        return out, p
+    end
+end
+end
+
+-- Parse a JSON weight entry = either a 2-D matrix [[row],[row],...]
+-- or a 1-D flat vector [n, n, n, ...] (used for layernorm gammas/biases).
+-- Caller positions p at the entry's own '['.
+-- Returns the value AS-IS: a 2-D matrix comes back as {row1, row2, ...},
+-- and a 1-D vector comes back as a flat {v1, v2, ...}.
+-- This matches the JSON exporter (numpy.tolist() preserves 1-D vs 2-D shape)
+-- and matches chat.lau's access pattern: W[LOff][j] for layernorm/bias vectors,
+-- W[LOff][j][i] for 2-D weight matrices.
+func parseWeightEntry(s, p)
+if string.sub(s, p, p) ~= "[" then
+    print("download_weights: entry expected '[' at " + p)
+    return {}, p
+end
+p = p + 1
+p = skipWs(s, p)
+if string.sub(s, p, p) == "]" then
+    return {}, p + 1
+end
+-- Peek at the first element to detect 1-D (number) vs 2-D (sub-array).
+varol first = string.sub(s, p, p)
+if first == "[" then
+    -- 2-D: each element is itself an array of numbers.
+    varol out = {}
+    while true do
+        p = skipWs(s, p)
+        varol row, np = parseRow(s, p)
+        out[#out + 1] = row
+        p = skipWs(s, np)
+        varol c = string.sub(s, p, p)
+        if c == "," then
+            p = p + 1
+        elseif c == "]" then
+            return out, p + 1
+        else
+            print("download_weights: matrix expected ',' or ']' at " + p)
+            return out, p
+        end
+    end
+else
+    -- 1-D: each element is a number. Return the flat list directly.
+    varol out = {}
+    while true do
+        p = skipWs(s, p)
+        varol v, np = parseNum(s, p)
+        out[#out + 1] = v
+        p = skipWs(s, np)
+        varol c = string.sub(s, p, p)
+        if c == "," then
+            p = p + 1
+        elseif c == "]" then
+            return out, p + 1
+        else
+            print("download_weights: vector expected ',' or ']' at " + p)
+            return out, p
+        end
+    end
+end
+end
+
+-- Parse the "weights" field = array of weight entries, each either a 2-D
+-- matrix or a 1-D vector. Caller positions p at the weights-list's own '['.
+-- Returns (weightsList, newP) where weightsList = {entry1, entry2, ...}.
+func parseWeightsList(s, p)
+varol out = {}
+if string.sub(s, p, p) ~= "[" then
+    print("download_weights: weights list expected '[' at " + p)
+    return out, p
+end
+p = p + 1
+p = skipWs(s, p)
+if string.sub(s, p, p) == "]" then
+    return out, p + 1
+end
+while true do
+    p = skipWs(s, p)
+    varol m, np = parseWeightEntry(s, p)
+    out[#out + 1] = m
+    p = skipWs(s, np)
+    varol c = string.sub(s, p, p)
+    if c == "," then
+        p = p + 1
+    elseif c == "]" then
+        return out, p + 1
+    else
+        print("download_weights: weights list expected ',' or ']' at " + p)
+        return out, p
+    end
+end
+end
+
+-- Parse a JSON string starting at p (caller has positioned p at the opening
+-- quote). Returns (str, newP) where newP points just past the closing quote.
+-- No escape sequences appear in this particular JSON, so we do not decode them.
+func parseString(s, p)
+if string.sub(s, p, p) ~= "\"" then
+    return "", p
+end
+varol start = p + 1
+varol q = string.find(s, "\"", start, true)
+if q == null then
+    return string.sub(s, start, #s), #s + 1
+end
+return string.sub(s, start, q - 1), q + 1
+end
+
+-- ============================================================
+-- parseJson: top-level entry point
+-- Walks {"config": {...}, "weights": [...]} and returns {config, weights}.
+-- ============================================================
+
+func parseJson(body)
+varol p = 1
+p = skipWs(body, p)
+if string.sub(body, p, p) ~= "{" then
+    print("download_weights: top-level not '{' at " + p)
+    return null
+end
+p = p + 1
+
+varol config = {}
+varol weights = {}
+
+while true do
+    p = skipWs(body, p)
+    if string.sub(body, p, p) == "}" then
+        break
+    end
+    if string.sub(body, p, p) ~= "\"" then
+        print("download_weights: expected '\"' at " + p)
+        return null
+    end
+    varol key, np = parseString(body, p)
+    p = skipWs(body, np)
+    if string.sub(body, p, p) ~= ":" then
+        print("download_weights: expected ':' at " + p)
+        return null
+    end
+    p = skipWs(body, p + 1)
+    if key == "config" then
+        if string.sub(body, p, p) ~= "{" then
+            print("download_weights: config not '{' at " + p)
+            return null
+        end
+        p = p + 1
+        while true do
+            p = skipWs(body, p)
+            if string.sub(body, p, p) == "}" then
+                p = p + 1
+                break
+            end
+            varol ckey, cnp = parseString(body, p)
+            p = skipWs(body, cnp)
+            if string.sub(body, p, p) ~= ":" then
+                print("download_weights: cfg ':' missing at " + p)
+                return null
+            end
+            p = skipWs(body, p + 1)
+            varol v, vnp = parseNum(body, p)
+            config[ckey] = v
+            p = skipWs(body, vnp)
+            if string.sub(body, p, p) == "," then
+                p = p + 1
+            end
+        end
+    elseif key == "weights" then
+        varol w, wnp = parseWeightsList(body, p)
+        weights = w
+        p = wnp
+    else
+        print("download_weights: unknown key '" + key + "' at " + p)
+        return null
+    end
+    p = skipWs(body, p)
+    if string.sub(body, p, p) == "," then
+        p = p + 1
+    end
+end
+
+return {
+    config  = config,
+    weights = weights,
+}
+end
