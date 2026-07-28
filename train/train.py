@@ -47,14 +47,37 @@ def get_batch(data, batch_size, ctx_len):
     return x.astype(np.int32), y.astype(np.int32)
 
 
-def adamw_step(params, grads, m, v, step, lr, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.01):
+def adamw_step(params, grads, m, v, step, lr, beta1=0.9, beta2=0.999, eps=1e-8,
+                weight_decay=0.01, decoupled_wd=True, clip_val=None, max_norm=None):
+    """AdamW with optional weight regularization.
+
+    Args:
+        weight_decay: L2 / decoupled weight decay coefficient.
+        decoupled_wd: If True (default), apply weight decay as a separate step
+            (Loshchilov & Hutter 2019). If False, mix it into the gradient
+            (legacy "L2 regularization" form).
+        clip_val: If set, hard-clip every weight value to [-clip_val, +clip_val]
+            after the update. Cheap and guarantees a bound, but discontinuous.
+        max_norm: If set, scale each 2D weight matrix so its Frobenius norm is
+            at most max_norm after the update. Smooth, prevents norm explosion.
+    """
     for k in params:
         g = grads[k]
         m[k] = beta1 * m[k] + (1 - beta1) * g
         v[k] = beta2 * v[k] + (1 - beta2) * (g * g)
         m_hat = m[k] / (1 - beta1 ** step)
         v_hat = v[k] / (1 - beta2 ** step)
-        params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps) + weight_decay * params[k])
+        if decoupled_wd:
+            params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps))
+            params[k] -= lr * weight_decay * params[k]
+        else:
+            params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps) + weight_decay * params[k])
+        if clip_val is not None:
+            params[k] = np.clip(params[k], -clip_val, clip_val)
+        if max_norm is not None and params[k].ndim >= 2:
+            pnorm = np.linalg.norm(params[k])
+            if pnorm > max_norm:
+                params[k] *= max_norm / pnorm
 
 
 def get_lr(step, warmup, max_steps, max_lr, min_lr):
@@ -65,7 +88,7 @@ def get_lr(step, warmup, max_steps, max_lr, min_lr):
 
 
 def train(text_path, steps=3000, batch_size=8, ctx_len=CTX_LEN, max_lr=3e-3, min_lr=3e-4, warmup=100,
-          seed=42, log_every=100, save_path=None):
+          seed=42, log_every=100, save_path=None, clip_val=9.0, max_norm=None):
     np.random.seed(seed)
     print(f"Loading {text_path}...")
     with open(text_path, 'r', encoding='ascii') as f:
@@ -111,7 +134,7 @@ def train(text_path, steps=3000, batch_size=8, ctx_len=CTX_LEN, max_lr=3e-3, min
                     print(f"  > {repr(s)}")
         grads = backward_full(params, logits, y, cache)
         lr = get_lr(step, warmup, steps, max_lr, min_lr)
-        adamw_step(params, grads, m, v, step + 1, lr)
+        adamw_step(params, grads, m, v, step + 1, lr, clip_val=clip_val, max_norm=max_norm)
 
     print(f"Training complete. Final loss: {loss:.4f}")
     log['final_loss'] = float(loss)
@@ -170,5 +193,9 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--data', type=str, default=os.path.join(os.path.dirname(__file__), 'chat.txt'))
     parser.add_argument('--out', type=str, default=os.path.join(os.path.dirname(__file__), 'weights', 'model.npz'))
+    parser.add_argument('--clip-val', type=float, default=9.0, help='Hard clip weights to [-clip, +clip]; set <=0 to disable.')
+    parser.add_argument('--max-norm', type=float, default=None, help='If set, rescale each 2D weight matrix to this Frobenius norm.')
     args = parser.parse_args()
-    train(args.data, steps=args.steps, batch_size=args.batch, max_lr=args.lr, seed=args.seed, save_path=args.out)
+    train(args.data, steps=args.steps, batch_size=args.batch, max_lr=args.lr, seed=args.seed,
+          save_path=args.out, clip_val=(args.clip_val if args.clip_val > 0 else None),
+          max_norm=args.max_norm)

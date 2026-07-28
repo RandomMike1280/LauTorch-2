@@ -65,14 +65,25 @@ def get_batch(data, batch_size, ctx_len):
 
 
 # ---------------- AdamW ----------------
-def adamw_step(params, grads, m, v, step, lr, beta1=0.9, beta2=0.95, eps=1e-8, weight_decay=0.0):
+def adamw_step(params, grads, m, v, step, lr, beta1=0.9, beta2=0.95, eps=1e-8,
+                weight_decay=0.0, decoupled_wd=True, clip_val=None, max_norm=None):
     for k in params:
         g = grads[k]
         m[k] = beta1 * m[k] + (1 - beta1) * g
         v[k] = beta2 * v[k] + (1 - beta2) * (g * g)
         m_hat = m[k] / (1 - beta1 ** step)
         v_hat = v[k] / (1 - beta2 ** step)
-        params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps) + weight_decay * params[k])
+        if decoupled_wd:
+            params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps))
+            params[k] -= lr * weight_decay * params[k]
+        else:
+            params[k] -= lr * (m_hat / (np.sqrt(v_hat) + eps) + weight_decay * params[k])
+        if clip_val is not None:
+            params[k] = np.clip(params[k], -clip_val, clip_val)
+        if max_norm is not None and params[k].ndim >= 2:
+            pnorm = np.linalg.norm(params[k])
+            if pnorm > max_norm:
+                params[k] *= max_norm / pnorm
 
 
 # ---------------- Muon ----------------
@@ -100,7 +111,8 @@ def _zeropower_via_newtonschulz5(G, steps=5):
     return X
 
 
-def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=5, weight_decay=0.0):
+def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=5,
+               weight_decay=0.0, decoupled_wd=True, clip_val=None, max_norm=None):
     """Update 2D weight matrices via Muon; 1D params via AdamW."""
     for k in params:
         g = grads[k]
@@ -111,14 +123,28 @@ def muon_step(params, grads, m, v, step, lr, momentum=0.95, ns_steps=5, weight_d
             # Scale to match AdamW's effective update magnitude
             # Muon paper uses lr * 0.2 * sqrt(max(rows, cols))
             scale = 0.2 * math.sqrt(max(update.shape[0], update.shape[1]))
-            params[k] -= lr * scale * update + lr * weight_decay * params[k]
+            if decoupled_wd:
+                params[k] -= lr * scale * update
+                params[k] -= lr * weight_decay * params[k]
+            else:
+                params[k] -= lr * (scale * update + weight_decay * params[k])
         else:
             # 1D params: LayerNorms, biases
             m[k] = 0.9 * m[k] + 0.1 * g
             v[k] = 0.95 * v[k] + 0.05 * (g * g)
             m_hat = m[k] / (1 - 0.9 ** step)
             v_hat = v[k] / (1 - 0.95 ** step)
-            params[k] -= lr * (m_hat / (np.sqrt(v_hat) + 1e-8) + weight_decay * params[k])
+            if decoupled_wd:
+                params[k] -= lr * (m_hat / (np.sqrt(v_hat) + 1e-8))
+                params[k] -= lr * weight_decay * params[k]
+            else:
+                params[k] -= lr * (m_hat / (np.sqrt(v_hat) + 1e-8) + weight_decay * params[k])
+        if clip_val is not None:
+            params[k] = np.clip(params[k], -clip_val, clip_val)
+        if max_norm is not None and params[k].ndim >= 2:
+            pnorm = np.linalg.norm(params[k])
+            if pnorm > max_norm:
+                params[k] *= max_norm / pnorm
 
 
 def get_lr(step, warmup, max_steps, max_lr, min_lr):
@@ -286,7 +312,7 @@ def verify_test_prompts_encodable(prompts):
 # ---------------- Training loop ----------------
 def train(steps=50_000, batch_size=8, ctx_len=128, lr=1e-3, warmup=500,
           seed=42, log_every=200, save_every=10_000, save_dir=None,
-          target_corpus=500_000):
+          target_corpus=500_000, clip_val=9.0, max_norm=None):
     """Train the model. Note: ctx_len here is the *training* window size;
     the model's CTX_LEN constant (128) is the architecture's max context.
     Training with a smaller window is fine since the model has no positional
@@ -377,7 +403,7 @@ def train(steps=50_000, batch_size=8, ctx_len=128, lr=1e-3, warmup=500,
         muon_lr = get_lr(step, warmup, steps, lr, lr * 0.1)
         adam_lr = muon_lr * 0.1
         # Apply Muon for 2D, AdamW for 1D in a single pass
-        muon_step(params, grads, m, v, step + 1, muon_lr)
+        muon_step(params, grads, m, v, step + 1, muon_lr, clip_val=clip_val, max_norm=max_norm)
 
         if (step + 1) % save_every == 0 and save_dir:
             ckpt_path = os.path.join(save_dir, f"checkpoint_{step+1:06d}.npz")
@@ -423,6 +449,8 @@ def main():
     parser.add_argument('--out', type=str, default=os.path.join(os.path.dirname(__file__), 'weights', 'model_big.npz'))
     parser.add_argument('--corpus', type=int, default=500_000)
     parser.add_argument('--ctx', type=int, default=48, help='training window size (default 48; model architecture caps at 128)')
+    parser.add_argument('--clip-val', type=float, default=9.0, help='Hard clip weights to [-clip, +clip]; set <=0 to disable.')
+    parser.add_argument('--max-norm', type=float, default=None, help='If set, rescale each 2D weight matrix to this Frobenius norm.')
     args = parser.parse_args()
 
     out_dir = os.path.dirname(args.out)
@@ -436,6 +464,8 @@ def main():
         seed=args.seed,
         save_dir=out_dir,
         target_corpus=args.corpus,
+        clip_val=(args.clip_val if args.clip_val > 0 else None),
+        max_norm=args.max_norm,
     )
 
     # Save final weights
