@@ -1,10 +1,7 @@
 --@cost(t=0)
 -- download_weights_parse_weights.laum: streaming JSON parser.
 varol _c = req("download_weights_parse_core.laum")
-varol skipWs = _c.skipWs
-varol isDigit = _c.isDigit
-varol parseNum = _c.parseNum
-varol parseString = _c.parseString
+varol skipWs, isDigit, parseNum, ParseString = _c.skipWs, _c.isDigit, _c.parseNum, _c.parseString
 func newParser()
 varol st={}
 st[1]=1 st[2]={} st[3]={} st[4]=null st[5]=null st[6]=null st[7]=0
