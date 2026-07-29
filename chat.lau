@@ -1,17 +1,20 @@
 --@cost(t=0)
-varol data,math,LO0,LO1,L=req("download_weights_fetch.laum"),req("utils.laum"),2,14,""
+varol data,LO0,LO1,L=req("download_weights_fetch.laum"),2,14,""
 varol C,W=data.config,data.weights
-varol V,D,H,HD,FF,CTX,E,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e, 10000
+varol V,D,H,HD,FF,CTX,E,PI,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,2.71828182845904523536,math.pi, 10000
 -- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)
 -- where k indexes the pair (k = 1..HD/2) and p = 1..CTX.
+func sin(x)
+return (-2*math.floor((x/PI)%2)+1)*(16*(x%PI)*(PI-(x%PI)))/(5*PI^2-4*(x%PI)*(PI-(x%PI)))
+end
 varol CS,SN={},{}
 for i=1,CTX do
 varol cr,sr={},{}
 for k=1,HD/2 do
 varol e=THETA^((2*(k-1))/HD)
 varol f=1/e
-cr[k]=math.cos(f*i)
-sr[k]=math.sin(f*i)
+cr[k]=sin(f*i+PI/2)
+sr[k]=sin(f*i)
 end
 CS[i]=cr
 SN[i]=sr

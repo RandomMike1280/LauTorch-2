@@ -101,9 +101,18 @@ varol token = string.sub(s, start, p - 1)
 return tonumber(token), p
 end
 
+-- Parse a JSON string starting at p (caller positions p at the opening quote).
+-- Returns (str, newP). No escape sequences appear in this JSON.
+func parseString(s, p)
+if string.sub(s, p, p) ~= "\"" then return "", p end
+varol start = p + 1
+varol q = string.find(s, "\"", start, true)
+if q == null then return string.sub(s, start, #s), #s + 1 end
+return string.sub(s, start, q - 1), q + 1
+end
+
 -- Parse a JSON row = array of numbers, e.g. [1.0, 2.0, -3.5]
 -- Returns (list, newP) where list = {n1, n2, ...}.
-func parseString(s, p)
 func parseRow(s, p)
 varol out = {}
 if string.sub(s, p, p) ~= "[" then
@@ -112,9 +121,7 @@ if string.sub(s, p, p) ~= "[" then
 end
 p = p + 1
 p = skipWs(s, p)
-if string.sub(s, p, p) == "]" then
-    return out, p + 1
-end
+if string.sub(s, p, p) == "]" then return out, p + 1 end
 while true do
     p = skipWs(s, p)
     varol v, np = parseNum(s, p)
@@ -140,3 +147,11 @@ end
 -- This matches the JSON exporter (numpy.tolist() preserves 1-D vs 2-D shape)
 -- and matches chat.lau's access pattern: W[LOff][j] for layernorm/bias vectors,
 -- W[LOff][j][i] for 2-D weight matrices.
+
+return {
+    ["skipWs"]    = skipWs,
+    ["isDigit"]   = isDigit,
+    ["parseNum"]  = parseNum,
+    ["parseString"] = parseString,
+    ["parseRow"]  = parseRow,
+}

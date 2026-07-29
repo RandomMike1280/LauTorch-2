@@ -1,172 +1,162 @@
 --@cost(t=0)
--- download_weights_parse_weights.laum
--- JSON parser weights + top-level parseJson entry point.
--- Required by: download_weights_fetch.laum
--- Requires:   download_weights_parse_core.laum
+-- download_weights_parse_weights.laum: streaming JSON parser.
 varol _c = req("download_weights_parse_core.laum")
 varol skipWs = _c.skipWs
 varol isDigit = _c.isDigit
 varol parseNum = _c.parseNum
 varol parseString = _c.parseString
-varol parseRow = _c.parseRow
-
-func parseWeightEntry(s, p)
-if string.sub(s, p, p) ~= "[" then
-    print("download_weights: entry expected '[' at " + p)
-    return {}, p
+func newParser()
+varol st={}
+st[1]=1 st[2]={} st[3]={} st[4]=null st[5]=null st[6]=null st[7]=0
+return st
 end
-p = p + 1
+-- Read next number, handling partial-number stashing across batches.
+func readNum(st, s, p)
+if st[6] ~= null then
+    varol fp = p
+    while fp <= #s do
+        varol c = string.sub(s, fp, fp)
+        if c == "-" OR c == "." OR isDigit(c) then fp = fp + 1 else break end
+    end
+    varol rest = string.sub(s, p, fp - 1)
+    if string.sub(rest, 1, 1) == "-" then rest = string.sub(rest, 2, #rest) end
+    varol combined = st[6] + rest
+    varol v = tonumber(combined)
+    st[6] = null
+    if fp > #s AND isDigit(string.sub(s, #s, #s)) then
+        st[6] = combined  return v, fp, true
+    end
+    return v, fp, false
+end
+varol v, np = parseNum(s, p)
+if np > #s AND isDigit(string.sub(s, #s, #s)) then
+    varol ts = p
+    while ts > 1 do
+        varol c = string.sub(s, ts, ts)
+        if c == "-" OR c == "." OR isDigit(c) then ts = ts - 1 else break end
+    end
+    st[6] = string.sub(s, ts, #s)  return v, np, true
+end
+return v, np, false
+end
+-- Read a sequence of numbers into target (1-D vector or row of 2-D matrix)
+-- until ']'. Append target to container, transition to endPhase, set st[7]=1 when done.
+func readNumSeq(st, s, p, target, endPhase, container)
 p = skipWs(s, p)
+if st[6] ~= null then
+    varol nc = string.sub(s, p, p)
+    if nc ~= "-" AND nc ~= "." AND isDigit(nc) == false then
+        target[#target + 1] = tonumber(st[6])  st[6] = null
+    end
+end
 if string.sub(s, p, p) == "]" then
-    return {}, p + 1
-end
--- Peek at the first element to detect 1-D (number) vs 2-D (sub-array).
-varol first = string.sub(s, p, p)
-if first == "[" then
-    -- 2-D: each element is itself an array of numbers.
-    varol out = {}
-    while true do
-        p = skipWs(s, p)
-        varol row, np = parseRow(s, p)
-        out[#out + 1] = row
-        p = skipWs(s, np)
-        varol c = string.sub(s, p, p)
-        if c == "," then
-            p = p + 1
-        elseif c == "]" then
-            return out, p + 1
-        else
-            print("download_weights: matrix expected ',' or ']' at " + p)
-            return out, p
-        end
+    if st[6] ~= null then
+        target[#target + 1] = tonumber(st[6])
+        st[6] = null
     end
-else
-    -- 1-D: each element is a number. Return the flat list directly.
-    varol out = {}
-    while true do
-        p = skipWs(s, p)
-        varol v, np = parseNum(s, p)
-        out[#out + 1] = v
-        p = skipWs(s, np)
-        varol c = string.sub(s, p, p)
-        if c == "," then
-            p = p + 1
-        elseif c == "]" then
-            return out, p + 1
-        else
-            print("download_weights: vector expected ',' or ']' at " + p)
-            return out, p
-        end
-    end
+    container[#container + 1] = target
+    st[1] = endPhase
+    if endPhase == 11 then st[5] = null else st[4] = null end
+    st[7] = 1
+    return p + 1
 end
+if string.sub(s, p, p) == "," then return p + 1 end
+varol v, np, stalled = readNum(st, s, p)
+if stalled then return np end
+target[#target + 1] = v
+return skipWs(s, np)
 end
-
--- Parse the "weights" field = array of weight entries, each either a 2-D
--- matrix or a 1-D vector. Caller positions p at the weights-list's own '['.
--- Returns (weightsList, newP) where weightsList = {entry1, entry2, ...}.
-func parseWeightsList(s, p)
-varol out = {}
-if string.sub(s, p, p) ~= "[" then
-    print("download_weights: weights list expected '[' at " + p)
-    return out, p
-end
-p = p + 1
-p = skipWs(s, p)
-if string.sub(s, p, p) == "]" then
-    return out, p + 1
-end
-while true do
-    p = skipWs(s, p)
-    varol m, np = parseWeightEntry(s, p)
-    out[#out + 1] = m
-    p = skipWs(s, np)
-    varol c = string.sub(s, p, p)
-    if c == "," then
-        p = p + 1
-    elseif c == "]" then
-        return out, p + 1
-    else
-        print("download_weights: weights list expected ',' or ']' at " + p)
-        return out, p
-    end
-end
-end
-
--- ============================================================
--- parseJson: top-level entry point
--- Walks {"config": {...}, "weights": [...]} and returns {config, weights}.
--- ============================================================
-
-func parseJson(body)
+func feed(st, batch)
+varol s = batch
 varol p = 1
-p = skipWs(body, p)
-if string.sub(body, p, p) ~= "{" then
-    print("download_weights: top-level not '{' at " + p)
-    return null
-end
-p = p + 1
-
-varol config = {}
-varol weights = {}
-
 while true do
-    p = skipWs(body, p)
-    if string.sub(body, p, p) == "}" then
-        break
-    end
-    if string.sub(body, p, p) ~= "\"" then
-        print("download_weights: expected '\"' at " + p)
-        return null
-    end
-    varol key, np = parseString(body, p)
-    p = skipWs(body, np)
-    if string.sub(body, p, p) ~= ":" then
-        print("download_weights: expected ':' at " + p)
-        return null
-    end
-    p = skipWs(body, p + 1)
-    if key == "config" then
-        if string.sub(body, p, p) ~= "{" then
-            print("download_weights: config not '{' at " + p)
-            return null
+    if p > #s then return end
+    varol ph = st[1]
+    if ph == 1 then
+        p = skipWs(s, p)
+        p = p + 1  st[1] = 2
+    elseif ph == 2 then
+        p = skipWs(s, p)
+        varol k, np = parseString(s, p)
+        st[4] = k  p = skipWs(s, np)  st[1] = 3
+    elseif ph == 3 then
+        p = skipWs(s, p)
+        p = p + 1  p = skipWs(s, p)
+        if st[4] == "config"then
+            st[1] = 4
+        else st[1] = 6 end
+    elseif ph == 4 then
+        p = p + 1  st[1] = 5
+    elseif ph == 5 then
+        p = skipWs(s, p)
+        if string.sub(s, p, p) == "}" then
+            p = p + 1
+            st[1] = 8
+            return
+        end
+        varol ck, cnp = parseString(s, p)
+        p = skipWs(s, cnp)
+        p = skipWs(s, p + 1)
+        varol v, vnp = parseNum(s, p)
+        st[2][ck] = v
+        p = skipWs(s, vnp)
+        if string.sub(s, p, p) == "," then p = p + 1 end
+    elseif ph == 6 then
+        p = p + 1  st[1] = 7
+    elseif ph == 7 then
+        p = skipWs(s, p)
+        if string.sub(s, p, p) == "]" then
+            p = p + 1
+            st[1] = 8
+            return
         end
         p = p + 1
-        while true do
-            p = skipWs(body, p)
-            if string.sub(body, p, p) == "}" then
-                p = p + 1
-                break
-            end
-            varol ckey, cnp = parseString(body, p)
-            p = skipWs(body, cnp)
-            if string.sub(body, p, p) ~= ":" then
-                print("download_weights: cfg ':' missing at " + p)
-                return null
-            end
-            p = skipWs(body, p + 1)
-            varol v, vnp = parseNum(body, p)
-            config[ckey] = v
-            p = skipWs(body, vnp)
-            if string.sub(body, p, p) == "," then
-                p = p + 1
-            end
+        st[4] = {}  st[5] = null  st[1] = 10
+    elseif ph == 10 then
+        p = skipWs(s, p)
+        varol c = string.sub(s, p, p)
+        if c == "[" then
+            p = p + 1  st[5] = {}  st[1] = 11
+        elseif c == "]" then
+            p = p + 1
+            st[3][#st[3] + 1] = st[4]
+            st[4] = null  st[5] = null  st[1] = 7
+        else
+            st[1] = 13
         end
-    elseif key == "weights" then
-        varol w, wnp = parseWeightsList(body, p)
-        weights = w
-        p = wnp
+    elseif ph == 11 then
+        p = skipWs(s, p)
+        if string.sub(s, p, p) == "]" then
+            p = p + 1
+            st[3][#st[3] + 1] = st[4]
+            st[4] = null  st[5] = null  st[1] = 7  return
+        end
+        p = p + 1  st[5] = {}  st[1] = 12
+    elseif ph == 12 then
+        st[7] = 0
+        p = readNumSeq(st, s, p, st[5], 11, st[4])
+        if st[7] == 1 then return end
+    elseif ph == 13 then
+        st[7] = 0
+        p = readNumSeq(st, s, p, st[4], 7, st[3])
+        if st[7] == 1 then return end
+    elseif ph == 8 then
+        p = skipWs(s, p)
+        if string.sub(s, p, p) == "}" then
+            p = p + 1
+            st[1] = 9
+            return
+        end
+        p = p + 1  st[1] = 2
     else
-        print("download_weights: unknown key '" + key + "' at " + p)
-        return null
-    end
-    p = skipWs(body, p)
-    if string.sub(body, p, p) == "," then
-        p = p + 1
+        return
     end
 end
-
+end
 return {
-    config  = config,
-    weights = weights,
+    ["newParser"]  = newParser,
+    ["feed"]       = feed,
+    ["isDone"]     = func(st) return st[1] == 9 end,
+    ["getConfig"]  = func(st) return st[2] end,
+    ["getWeights"] = func(st) return st[3] end,
 }
-end
