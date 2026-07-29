@@ -249,9 +249,8 @@ varol chunk_count = manifest.chunk_count
 varol chunk_size = manifest.chunk_size
 varol fname_template = manifest.filename_template
 
--- Compute the padding width from the largest chunk index (= chunk_count - 1).
--- The Python preprocessor uses max(3, len(str(n_chunks))) so we mirror that.
-varol pad_width = #tostring(chunk_count - 1)
+-- Compute padding width from chunk_count (3 digits minimum).
+varol pad_width = #tostring(chunk_count)
 if pad_width < 3 then
     pad_width = 3
 end
@@ -259,6 +258,8 @@ end
 print("download_weights: manifest OK, fetching " + chunk_count + " chunks of " + chunk_size + " bytes")
 
 -- Fetch each chunk in order and concatenate into one body string.
+-- Rate limit: wait 1 second between requests to stay under GitHub's 70 req/min cap.
+-- Also print progress every 50 chunks so the user can see forward motion.
 varol body = ""
 varol i = 1
 while i <= chunk_count do
@@ -269,6 +270,12 @@ while i <= chunk_count do
         return null
     end
     body = body + chunk
+    if i % 50 == 0 OR i == chunk_count then
+        print("download_weights: chunk " + i + " / " + chunk_count + " (" + ((i * 100) / chunk_count) + "%)")
+    end
+    if i < chunk_count then
+        task.wait(1)
+    end
     i = i + 1
 end
 

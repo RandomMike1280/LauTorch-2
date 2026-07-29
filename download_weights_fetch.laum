@@ -1,0 +1,128 @@
+--@cost(t=0)
+-- download_weights_fetch.laum
+-- Orchestrates manifest fetch, chunk download, JSON parse, and returns the
+-- assembled {config, vocab_chars, weights} table.
+-- Depends on: download_weights_http.laum
+--             download_weights_parse_weights.laum
+-- Usage:   varol data = req("download_weights_fetch.laum")
+
+varol _h = req("download_weights_http.laum")
+varol vocab_chars    = _h.vocab_chars
+varol httpGet       = _h.httpGet
+varol fetchManifest  = _h.fetchManifest
+varol chunkUrl      = _h.chunkUrl
+varol base_url      = _h.base_url
+varol manifest_url  = _h.manifest_url
+varol _w = req("download_weights_parse_weights.laum")
+varol parseJson = _w.parseJson
+varol newParser = _w.newParser
+varol feedParser = _w.feed
+varol isDone = _w.isDone
+varol getConfig = _w.getConfig
+varol getWeights = _w.getWeights
+
+varol manifest = fetchManifest(manifest_url)
+if manifest == null then
+    return null
+end
+
+-- NOTE: Lau tables returned from functions use sequential integer keys [1..N].
+-- String-keyed dictionary syntax ["key"] = value compiles as sequential array keys.
+varol chunk_count = manifest[1]
+varol chunk_size = manifest[2]
+varol fname_template = manifest[3]
+
+-- Compute padding width from chunk_count (3 digits minimum).
+varol pad_width = #tostring(chunk_count)
+if pad_width < 3 then
+    pad_width = 3
+end
+
+print("download_weights: manifest OK, fetching " + chunk_count + " chunks of " + chunk_size + " bytes")
+
+-- Download chunks into a table of raw JSON strings (never concatenate to one string,
+-- to avoid Lau's 3000-character string limit on any single string).
+varol chunks = {}
+varol i = 1
+while i <= chunk_count do
+    varol url = chunkUrl(fname_template, i, pad_width)
+    varol chunk = httpGet(url)
+    if chunk == null then
+        print("download_weights: chunk " + i + " failed permanently")
+        return null
+    end
+    chunks[#chunks + 1] = chunk
+    if i % 50 == 0 OR i == chunk_count then
+        print("download_weights: downloaded chunk " + i + " / " + chunk_count)
+    end
+    if i < chunk_count then
+        task.wait(1)
+    end
+    i = i + 1
+end
+
+print("download_weights: all " + #chunks + " chunks downloaded, parsing...")
+
+-- Merge partial JSON strings in small batches to stay under the 3000-char limit.
+-- Strategy: build each batch up to ~2500 chars, parse it, then merge the results.
+func buildAndMerge(part_chunks)
+    varol batch = ""
+    varol ci = 1
+    while ci <= #part_chunks do
+        varol c = part_chunks[ci]
+        if #batch + #c > 2500 then
+            -- flush current batch
+            varol p = parseJson(batch)
+            if p == null then
+                print("download_weights: parse failed on batch around chunk " + ci)
+                return null
+            end
+            batch = ""
+        end
+        batch = batch + c
+        ci = ci + 1
+    end
+    if #batch > 0 then
+        varol p = parseJson(batch)
+        if p == null then
+            print("download_weights: parse failed on final batch")
+            return null
+        end
+        return p
+    end
+    return null
+end
+
+-- Phase 1: stream chunks into the stateful parser.
+-- Lau's string concat limit is 3000 chars, so we must feed chunks one at a time
+-- and let the parser resume across batches.
+varol parser = newParser()
+varol j = 1
+while j <= #chunks do
+    varol w_before = #parser[3]
+    feedParser(parser, chunks[j])
+    varol w_after = #parser[3]
+    varol w_added = w_after - w_before
+    if w_added > 0 AND j % 50 == 1 then
+        print("download_weights: chunk " + j + " added " + w_added + " weight entries (total=" + w_after + ")")
+    end
+    if j % 50 == 1 then
+        print("download_weights: parsed up to chunk " + j + " / " + chunk_count)
+    end
+    j = j + 1
+end
+if isDone(parser) == false then
+    print("download_weights: parse incomplete, phase=" + parser[1])
+    return null
+end
+
+varol config = getConfig(parser)
+varol weights = getWeights(parser)
+
+print("download_weights: done, config keys=" + #config + " weights count=" + #weights)
+
+return {
+    config      = config,
+    vocab_chars = vocab_chars,
+    weights     = weights,
+}

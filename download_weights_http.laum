@@ -1,0 +1,190 @@
+--@cost(t=0)
+-- download_weights_http.laum
+-- Vocab lookup, HTTP helpers, manifest parser, chunk URL builder.
+varol _vc = " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+varol vocab_chars = {}
+for i=1,#_vc do
+    vocab_chars[i] = string.sub(_vc, i, i)
+end
+
+varol base_url = "https://raw.githubusercontent.com/RandomMike1280/LauTorch-2/main/www/"
+varol manifest_url = base_url + "weights.manifest.json"
+
+-- Returns true if c is a decimal digit "0"-"9".
+func isDigit(c)
+if c == "0" then return true end
+if c == "1" then return true end
+if c == "2" then return true end
+if c == "3" then return true end
+if c == "4" then return true end
+if c == "5" then return true end
+if c == "6" then return true end
+if c == "7" then return true end
+if c == "8" then return true end
+if c == "9" then return true end
+return false
+end
+
+-- Fetch a URL with retries (3 attempts, 1s backoff).
+func httpGet(url)
+varol attempts = 0
+while attempts < 3 do
+    attempts = attempts + 1
+    varol ok, body = pcall(http.get, url)
+    if ok == true then
+        return body
+    end
+    print("download_weights: GET " + url + " attempt " + attempts + " failed: " + body)
+    if attempts < 3 then
+        task.wait(1)
+    end
+end
+return null
+end
+
+-- Pad integer with leading zeros to given width.
+func padInt(n, width)
+varol s = tostring(n)
+while #s < width do
+    s = "0" + s
+end
+return s
+end
+
+-- Fetch and hand-parse the manifest JSON.
+-- Manifest shape: {"chunk_count": N, "chunk_size": S, "filename_template": "..."}
+func fetchManifest(url)
+varol m = httpGet(url)
+if m == null then
+    print("download_weights: failed to fetch manifest")
+    return null
+end
+varol chunk_count = null
+varol chunk_size = null
+varol pos = string.find(m, "\"chunk_count\"", 1, true)
+if pos == null then return null end
+pos = pos + #"\"chunk_count\""
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+varol ns = pos
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if isDigit(c) then
+        pos = pos + 1
+    else
+        break
+    end
+end
+if ns < pos then
+    chunk_count = tonumber(string.sub(m, ns, pos - 1))
+else
+    chunk_count = null
+end
+pos = string.find(m, "\"chunk_size\"", 1, true)
+if pos == null then return null end
+pos = pos + #"\"chunk_size\""
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+ns = pos
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if isDigit(c) then
+        pos = pos + 1
+    else
+        break
+    end
+end
+if ns < pos then
+    chunk_size = tonumber(string.sub(m, ns, pos - 1))
+else
+    chunk_size = null
+end
+pos = string.find(m, "\"filename_template\"", 1, true)
+if pos == null then return null end
+pos = pos + #"\"filename_template\""
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == ":" then
+        pos = pos + 1
+        break
+    end
+    pos = pos + 1
+end
+while pos <= #m do
+    varol c = string.sub(m, pos, pos)
+    if c == " " OR c == "\t" OR c == "\n" OR c == "\r" then
+        pos = pos + 1
+    else
+        break
+    end
+end
+if string.sub(m, pos, pos) ~= "\"" then return null end
+varol ss = pos + 1
+varol se = string.find(m, "\"", ss, true)
+if se == null then return null end
+varol filename_template = string.sub(m, ss, se - 1)
+return {
+    chunk_count       = chunk_count,
+    chunk_size       = chunk_size,
+    filename_template = filename_template,
+}
+end
+
+-- Build chunk URL from template + index.
+func chunkUrl(tmpl, i, pad)
+varol pct = string.find(tmpl, "%", 1, true)
+if pct == null then
+    return base_url + tmpl + tostring(i)
+end
+varol prefix = string.sub(tmpl, 1, pct - 1)
+varol suffix_start = pct + 1
+while suffix_start <= #tmpl do
+    varol c = string.sub(tmpl, suffix_start, suffix_start)
+    if c == "d" then
+        suffix_start = suffix_start + 1
+        break
+    end
+    suffix_start = suffix_start + 1
+end
+varol suffix = string.sub(tmpl, suffix_start, #tmpl)
+return base_url + prefix + padInt(i, pad) + suffix
+end
+
+varol _export = {
+    ["vocab_chars"]    = vocab_chars,
+    ["httpGet"]       = httpGet,
+    ["fetchManifest"] = fetchManifest,
+    ["chunkUrl"]      = chunkUrl,
+    ["base_url"]      = base_url,
+    ["manifest_url"]  = manifest_url,
+    ["padInt"]        = padInt,
+}
+return _export

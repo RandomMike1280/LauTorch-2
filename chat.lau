@@ -1,17 +1,20 @@
 --@cost(t=0)
-varol data,math,LO0,LO1,L=req("download_weights.laum"),req("utils.laum"),2,14,""
+varol data,LO0,LO1,L=req("download_weights_fetch.laum"),2,14,""
 varol C,W=data.config,data.weights
-varol V,D,H,HD,FF,CTX,E,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,math.e, 10000
+varol V,D,H,HD,FF,CTX,E,PI,THETA=C.vocab_size,C.d_model,C.n_heads,C.head_dim,C.d_ff,C.ctx_len,2.71828182845904523536,math.pi, 10000
 -- Precompute RoPE cos/sin tables. CS[p][k] holds cos(theta_{k} * p)
 -- where k indexes the pair (k = 1..HD/2) and p = 1..CTX.
+func sin(x)
+return (-2*math.floor((x/PI)%2)+1)*(16*(x%PI)*(PI-(x%PI)))/(5*PI^2-4*(x%PI)*(PI-(x%PI)))
+end
 varol CS,SN={},{}
 for i=1,CTX do
 varol cr,sr={},{}
 for k=1,HD/2 do
 varol e=THETA^((2*(k-1))/HD)
 varol f=1/e
-cr[k]=math.cos(f*i)
-sr[k]=math.sin(f*i)
+cr[k]=sin(f*i+PI/2)
+sr[k]=sin(f*i)
 end
 CS[i]=cr
 SN[i]=sr
@@ -103,11 +106,7 @@ end
 func gl(x)
 return 0.5*x*(1+th(0.7978845608*(x+0.044715*x^3)))
 end
--- RoPE: rotate vector in-place using position p's precomputed cos/sin
--- Operates on pairs (T[2k-1], T[2k]) for k = 1..HD/2.
--- For each pair: real = T[2k-1]*cos[k] - T[2k]*sin[k]
---                imag = T[2k-1]*sin[k] + T[2k]*cos[k]
--- Note: T is mutated; the caller is responsible for providing a copy if needed.
+-- RoPE: rotate Q/K in-place using precomputed cos/sin at position p.
 func rp(T,p)
 for k=1,HD/2 do
 varol a,b,c,s=T[2*k-1],T[2*k],CS[p][k],SN[p][k]
@@ -263,13 +262,8 @@ if string.find(o,"Human:",1,true) then break end
 varol x=er(bi)
 last_lg=fwd(x)
 end
--- Strip "Human:" and everything after it
 o=string.sub(o,1,string.find(o,"Human:",1,true)-1)
 return o
 end
 print("Q: Hello")
 print("A:" + gen("Human: Hello\nBot:"))
--- print("Q: Compute 7*4")
--- print("A:" + gen("Human: Compute 7*4\nBot:"))
--- print("Q: What's the capital of Germany?")
--- print("A:" + gen("Human: What's the capital of Germany?\nBot:"))"))
