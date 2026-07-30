@@ -143,7 +143,7 @@ def generate(params, prompt, max_new=100, temperature=1.0):
 # Train
 m = {k: np.zeros_like(p) for k, p in params.items()}
 v = {k: np.zeros_like(p) for k, p in params.items()}
-STEPS, BS = 10000, 16
+STEPS, BS = 20000, 16
 # Muon peak LR; effective update is lr * 0.2 * sqrt(max(rows, cols)) ~ lr * 2.7,
 # so 1e-3 base ≈ equivalent to AdamW 3e-3 (more aggressive, but Muon is well-behaved).
 MUON_LR = 1e-2
