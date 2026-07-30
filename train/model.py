@@ -16,12 +16,12 @@ import numpy as np
 
 VOCAB_SIZE = 95
 VOCAB = ''.join(chr(32 + i) for i in range(VOCAB_SIZE))  # ' ' to '~'
-HEAD_DIM = 8
-D_MODEL = 32
+HEAD_DIM = 6
+D_MODEL = 24
 N_HEADS = 4
-HEAD_DIM = D_MODEL // N_HEADS  # 12
+HEAD_DIM = D_MODEL // N_HEADS  # 6
 N_LAYERS = 2
-D_FF = 128
+D_FF = 96
 CTX_LEN = 128
 MAX_BATCH = 32
 
